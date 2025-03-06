@@ -14,7 +14,8 @@
         Name = name;
         Treasury = new Treasury(startingGold);
         RunwayManager = new RunwayManager(new RunwayMaintenanceSystem());
-        Shop = new Shop(Treasury);
+        GameLogger g = new GameLogger();
+        Shop = new Shop(Treasury,g);
         FlightScheduler = new FlightScheduler();
         EventSystem = new EventSystem(new RandomGenerator()); // Assumes DefaultRandomGenerator implements IRandomGenerator
         GameLogger = new GameLogger();

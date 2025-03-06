@@ -11,28 +11,32 @@ public class RunwayManager
         this.maintenanceSystem = maintenanceSystem;
     }
 
-    public void UnlockRunway(string runwayName)
+    // Using the new enum instead of a string keeps the method call neater.
+    public void UnlockRunway(RunwayTier tier)
     {
         Runway newRunway = null;
 
-        if (runwayName == "Tier 1 Runway")
+        switch (tier)
         {
-            newRunway = new Runway("Runway 01L", 100);
-        }
-        else if (runwayName == "Tier 2 Runway")
-        {
-            newRunway = new Runway("Runway 02R", 2000);
-        }
-        else if (runwayName == "Tier 3 Runway")
-        {
-            newRunway = new Runway("Runway 03L", 50000);
+            case RunwayTier.Tier1:
+                newRunway = new SmallRunway("Runway 01L");
+                break;
+            case RunwayTier.Tier2:
+                newRunway = new MediumRunway("Runway 02R");
+                break;
+            case RunwayTier.Tier3:
+                newRunway = new LargeRunway("Runway 03L");
+                break;
+            default:
+                Console.WriteLine("Unknown runway tier specified.");
+                break;
         }
 
         if (newRunway != null)
         {
             runways.Add(newRunway);
             maintenanceSystem.RegisterRunway(newRunway.RunwayID);
-            Console.WriteLine($"Unlocked and registered {newRunway.RunwayID}");
+            Console.WriteLine($"Unlocked and registered {newRunway.RunwayID} (Tier {newRunway.Tier})");
         }
     }
 
@@ -48,7 +52,7 @@ public class RunwayManager
             foreach (var runway in runways)
             {
                 int wear = maintenanceSystem.GetWearLevel(runway.RunwayID);
-                Console.WriteLine($"- {runway.RunwayID} ({runway.Length}m, Wear: {wear}%)");
+                Console.WriteLine($"- {runway.RunwayID} (Length: {runway.Length}m, Tier: {runway.Tier}, Wear: {wear}%)");
             }
         }
     }
@@ -102,11 +106,12 @@ public class RunwayManager
         }
     }
 
-    // Called when a flight lands to apply wear
+    // Called when a flight lands to apply wear.
     public void HandleLanding(string runwayID, Weather weather, int trafficVolume)
     {
         maintenanceSystem.ApplyWear(runwayID, weather, trafficVolume);
     }
+
     public List<Runway> GetAvailableRunways(Plane plane)
     {
         List<Runway> availableRunways = new List<Runway>();

@@ -8,7 +8,8 @@
     public TestHarness()
     {
         treasury = new Treasury(90, 3);  // Start with 0 gold
-        shop = new Shop(treasury);
+        GameLogger g = new GameLogger();
+        shop = new Shop(treasury, g);
         var maintenanceSystem = new RunwayMaintenanceSystem(); // Create maintenance system
         runwayManager = new RunwayManager(maintenanceSystem);
         eventScheduler = new EventScheduler();
@@ -17,7 +18,7 @@
         eventScheduler.ScheduleEvent(new ScheduledEvent(10, tick =>
         {
             shop.BuyItem("Tier 1 Runway");
-            runwayManager.UnlockRunway("Tier 1 Runway");
+            runwayManager.UnlockRunway(RunwayTier.Tier1);
             Console.WriteLine($"[Tick {tick}] Tier 1 Runway unlocked.");
         }));
 
@@ -26,7 +27,7 @@
             if (treasury.GetBalance() >= 10000)
             {
                 shop.BuyItem("Tier 2 Runway");
-                runwayManager.UnlockRunway("Tier 2 Runway");
+                runwayManager.UnlockRunway(RunwayTier.Tier2);
                 Console.WriteLine($"[Tick {tick}] Tier 2 Runway unlocked.");
             }
         }));

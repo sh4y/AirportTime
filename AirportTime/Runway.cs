@@ -1,22 +1,23 @@
-﻿
-// Game simulation class to simulate the purchase of items and running the airport
-// Flight class to represent flights and handle landing procedure
-// Plane class to represent planes that will land on the runways
-// Runway class to represent runways available for landing
+﻿// File: AirportTime/Runway.cs
+
 public class Runway
 {
-    public string RunwayID { get; private set; }
+    public string RunwayID { get; set; }
     public int Length { get; private set; }
+    public int Tier { get; private set; }
 
-    public Runway(string runwayID, int length)
+    public Runway(string runwayID, int length, int tier)
     {
         RunwayID = runwayID;
         Length = length;
+        Tier = tier;
+
     }
 
-    // Check if a plane can land on this runway
-    public bool CanLand(Plane plane)
+    // Check if a plane can land on this runway.
+    public virtual bool CanLand(Plane plane)
     {
-        return plane.RequiredRunwayLength <= Length;
+        // Example logic: the runway length must be at least the plane's required runway length.
+        return Length >= plane.RequiredRunwayLength;
     }
 }
