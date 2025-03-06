@@ -1,0 +1,213 @@
+@startuml
+' Enumerations
+enum FlightType {
+  Commercial
+  Cargo
+  VIP
+  Emergency
+}
+
+enum FlightPriority {
+  Standard
+  VIP
+  Emergency
+}
+
+enum PlaneSize {
+  Small
+  Medium
+  Large
+}
+
+enum ItemType {
+  Runway
+  Staff
+  Equipment
+  Upgrade
+  Service
+}
+
+' Interfaces
+interface IModifiable {
+  +AddModifier(modifierName : string, modifierValue : double)
+  +RemoveModifier(modifierName : string)
+  +ApplyModifiers(baseValue : double) : double
+}
+interface IEvent {
+  +EventName : string
+  +Trigger(airport : Airport)
+}
+interface IRevenueSource {
+  +CalculateRevenue() : double
+}
+interface IPurchasable {
+  +Name : string
+  +Price : double
+  +Description : string
+  +OnPurchase(airport : Airport)
+}
+
+' Main Simulation and Management Classes
+class GameSimulation {
+  +Main(args : String[])
+}
+
+class TestHarness {
+  +StartTest()
+}
+
+class TickManager {
+  -CurrentTick : int
+  -timer : Timer
+  -tickInterval : int
+  +Start()
+  +Pause()
+  +SetSpeedMultiplier(multiplier : double)
+}
+
+class Airport {
+  -Name : string
+  +Tick(currentTick : int)
+}
+
+class Treasury {
+  -balance : double
+  -goldPerTick : double
+  +AccumulateGold()
+  +AddFunds(amount : double, source : string)
+  +DeductFunds(amount : double, reason : string) : bool
+  +GetBalance() : double
+}
+
+class RunwayManager {
+  -runways : List<Runway>
+  +UnlockRunway(runwayName : string)
+  +DisplayRunwayInfo()
+  +CanLand(plane : Plane) : bool
+  +GetAvailableRunway(plane : Plane) : Runway
+}
+
+class Shop {
+  -itemsForSale : List<Item>
+  -treasury : Treasury
+  +ViewItemsForSale()
+  +BuyItem(itemName : string) : bool
+}
+
+class FlightScheduler {
+  -scheduledFlights : Dictionary<int, List<Flight>>
+  +ScheduleFlight(flight : Flight, scheduledTick : int)
+  +GetFlightsAtTick(tick : int) : List<Flight>
+}
+
+class EventSystem {
+  +TriggerRandomEvent(airport : Airport)
+  +TriggerDelayEvent(flight : Flight)
+}
+
+class GameLogger {
+  -logEntries : List<String>
+  +Log(message : string)
+  +DisplayLogs()
+  +DisplayRecentLogs(count : int)
+}
+
+class ModifierManager {
+  -modifiers : List<Modifier>
+  +AddModifier(name : string, value : double)
+  +RemoveModifier(name : string)
+  +ApplyModifiers(baseValue : double) : double
+  +CalculateRevenue(flight : Flight) : double
+}
+
+' Supporting Classes
+class Item {
+  +Name : string
+  +Description : string
+  +Price : double
+  +Type : ItemType
+  +Tier : int
+}
+
+class Flight {
+  +FlightNumber : string
+  +Plane : Plane
+  +Type : FlightType
+  +Priority : FlightPriority
+  +ScheduledLandingTime : int
+  +Passengers : int
+  +AttemptLanding(runway : Runway)
+}
+
+class Plane {
+  +PlaneID : string
+  +Size : PlaneSize
+  +Weight : double
+  +RequiredRunwayLength : int
+}
+
+class Runway {
+  +RunwayID : string
+  +Length : int
+  +CanLand(plane : Plane) : bool
+}
+
+class FlightGenerator {
+  +GenerateRandomFlight(tick : int, passengerCount : int) : Flight
+  +GenerateMultipleFlights(tick : int, count : int) : List<Flight>
+}
+
+class FlightManager {
+  -activeFlights : List<Flight>
+  -landingQueue : Queue<Flight>
+  +ScheduleFlight(flight : Flight)
+  +ProcessLandings()
+  +GetLandingQueue() : Queue<Flight>
+}
+
+class RunwayMaintenanceSystem {
+  -runwayWearLevels : Dictionary<string, int>
+  +RegisterRunway(runwayID : string)
+  +ApplyWear(runwayID : string, weather : Weather, trafficVolume : int)
+  +RepairRunway(runwayID : string)
+  +GetWearLevel(runwayID : string) : int
+}
+
+class Revenue {
+  -totalRevenue : double
+  +CalculateRevenue(flight : Flight)
+  +GetTotalRevenue() : double
+}
+
+class Modifier {
+  +Name : string
+  +Value : double
+}
+
+' Additional Classes
+class Weather {
+}
+
+' Relationships
+Airport "1" o-- "1" Treasury : manages
+Airport "1" o-- "1" RunwayManager : has
+Airport "1" o-- "1" Shop : owns
+Airport "1" o-- "1" FlightScheduler : schedules
+Airport "1" o-- "1" EventSystem : triggers
+Airport "1" o-- "1" GameLogger : logs
+Airport "1" o-- "1" ModifierManager : applies
+
+Shop --> Item : sells
+RunwayManager --> Runway : contains
+FlightScheduler --> Flight : schedules
+Flight --> Plane : uses
+ModifierManager --> Modifier : manages
+
+GameSimulation --> Airport : simulates
+TestHarness --> GameSimulation : tests
+TickManager ..> Airport : triggers Tick()
+
+IPurchasable <|.. Item
+IModifiable <|.. ModifierManager
+
+@enduml
