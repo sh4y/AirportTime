@@ -12,13 +12,12 @@
     public Airport(string name, double startingGold)
     {
         Name = name;
-        Treasury = new Treasury(startingGold);
+        GameLogger = new GameLogger();
+        Treasury = new Treasury(GameLogger);
         RunwayManager = new RunwayManager(new RunwayMaintenanceSystem());
-        GameLogger g = new GameLogger();
-        Shop = new Shop(Treasury,g);
+        Shop = new Shop(Treasury, GameLogger);
         FlightScheduler = new FlightScheduler();
         EventSystem = new EventSystem(new RandomGenerator()); // Assumes DefaultRandomGenerator implements IRandomGenerator
-        GameLogger = new GameLogger();
         ModifierManager = new ModifierManager();
     }
 

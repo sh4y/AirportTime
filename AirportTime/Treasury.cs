@@ -6,12 +6,14 @@
 public class Treasury
 {
     private double balance;
-    private double goldPerTick;
+    private readonly double goldPerTick;
+    private readonly GameLogger gameLogger;
 
-    public Treasury(double startingBalance, double goldPerTick = 1)
+    public Treasury(GameLogger gameLogger, double startingBalance = 90, double goldPerTick = 3)
     {
-        balance = startingBalance;
-        this.goldPerTick = goldPerTick;  // Amount of gold earned per tick
+        this.balance = startingBalance;
+        this.goldPerTick = goldPerTick;
+        this.gameLogger = gameLogger;
     }
 
     public double GetBalance() => balance;
@@ -19,7 +21,7 @@ public class Treasury
     public void AddFunds(double amount, string source)
     {
         balance += amount;
-        Console.WriteLine($"Added {amount:C} to treasury from {source}. Total: {balance:C}");
+        gameLogger.Log($"Added {amount} gold from {source}. New balance: {balance}");
     }
 
     public bool DeductFunds(double amount, string reason)
@@ -27,19 +29,17 @@ public class Treasury
         if (balance >= amount)
         {
             balance -= amount;
-            Console.WriteLine($"Deducted {amount:C} for {reason}. Total: {balance:C}");
+            gameLogger.Log($"Deducted {amount} gold for {reason}. New balance: {balance}");
             return true;
         }
-        else
-        {
-            Console.WriteLine($"Not enough funds to deduct {amount:C}. Total: {balance:C}");
-            return false;
-        }
+        gameLogger.Log($"Failed to deduct {amount} gold for {reason}. Insufficient balance: {balance}");
+        return false;
     }
 
-    // Accumulate gold over time (per tick)
+    // Accumulates gold per tick.
     public void AccumulateGold()
     {
-        AddFunds(goldPerTick, "Gold earned over time");
+        balance += goldPerTick;
+        gameLogger.Log($"Accumulated {goldPerTick} gold. New balance: {balance}");
     }
 }

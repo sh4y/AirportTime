@@ -2,11 +2,12 @@
 // Game simulation class to simulate the purchase of items and running the airport
 public class GameSimulation
 {
-    public static void Main()
+    public static void Msain()
     {
         // Start with 0 gold
-        Treasury playerTreasury = new Treasury(0);
         GameLogger g = new GameLogger();
+
+        Treasury playerTreasury = new Treasury(g);
         Shop shop = new Shop(playerTreasury, g);
         RunwayMaintenanceSystem maintenanceSystem = new RunwayMaintenanceSystem();
         RunwayManager runwayManager = new RunwayManager(maintenanceSystem);

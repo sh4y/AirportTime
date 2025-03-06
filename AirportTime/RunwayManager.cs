@@ -3,15 +3,14 @@ using System.Collections.Generic;
 
 public class RunwayManager
 {
-    private List<Runway> runways = new List<Runway>();
-    private RunwayMaintenanceSystem maintenanceSystem;
+    private readonly List<Runway> runways = new List<Runway>();
+    private readonly RunwayMaintenanceSystem maintenanceSystem;
 
     public RunwayManager(RunwayMaintenanceSystem maintenanceSystem)
     {
         this.maintenanceSystem = maintenanceSystem;
     }
 
-    // Using the new enum instead of a string keeps the method call neater.
     public void UnlockRunway(RunwayTier tier)
     {
         Runway newRunway = null;
@@ -45,15 +44,13 @@ public class RunwayManager
         if (runways.Count == 0)
         {
             Console.WriteLine("No runways unlocked yet.");
+            return;
         }
-        else
+        Console.WriteLine("Unlocked Runways:");
+        foreach (var runway in runways)
         {
-            Console.WriteLine("Unlocked Runways:");
-            foreach (var runway in runways)
-            {
-                int wear = maintenanceSystem.GetWearLevel(runway.RunwayID);
-                Console.WriteLine($"- {runway.RunwayID} (Length: {runway.Length}m, Tier: {runway.Tier}, Wear: {wear}%)");
-            }
+            int wear = maintenanceSystem.GetWearLevel(runway.RunwayID);
+            Console.WriteLine($"- {runway.RunwayID} (Length: {runway.Length}m, Tier: {runway.Tier}, Wear: {wear}%)");
         }
     }
 
@@ -76,9 +73,7 @@ public class RunwayManager
         {
             int wear = maintenanceSystem.GetWearLevel(runway.RunwayID);
             if (runway.CanLand(plane) && wear < RunwayMaintenanceSystem.FullDegradationThreshold)
-            {
                 return runway;
-            }
         }
         return null;
     }
@@ -88,10 +83,9 @@ public class RunwayManager
         foreach (var runway in runways)
         {
             int wearLevel = maintenanceSystem.GetWearLevel(runway.RunwayID);
-
             if (wearLevel >= RunwayMaintenanceSystem.CriticalWearThreshold)
             {
-                double repairCost = wearLevel * 15; // Example repair cost calculation
+                double repairCost = wearLevel * 15; // example cost calculation
                 if (treasury.GetBalance() >= repairCost)
                 {
                     treasury.DeductFunds(repairCost, $"Maintenance for {runway.RunwayID}");
@@ -106,7 +100,6 @@ public class RunwayManager
         }
     }
 
-    // Called when a flight lands to apply wear.
     public void HandleLanding(string runwayID, Weather weather, int trafficVolume)
     {
         maintenanceSystem.ApplyWear(runwayID, weather, trafficVolume);
@@ -114,14 +107,12 @@ public class RunwayManager
 
     public List<Runway> GetAvailableRunways(Plane plane)
     {
-        List<Runway> availableRunways = new List<Runway>();
+        var availableRunways = new List<Runway>();
         foreach (var runway in runways)
         {
             int wear = maintenanceSystem.GetWearLevel(runway.RunwayID);
             if (runway.CanLand(plane) && wear < RunwayMaintenanceSystem.FullDegradationThreshold)
-            {
                 availableRunways.Add(runway);
-            }
         }
         return availableRunways;
     }

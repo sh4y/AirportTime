@@ -1,12 +1,12 @@
 ﻿public class EventSystem
 {
-    private IRandomGenerator randomGenerator;
-    private List<IEvent> possibleEvents;
+    private readonly IRandomGenerator randomGenerator;
+    private readonly List<IEvent> possibleEvents = new List<IEvent>();
 
+    // IRandomGenerator is injected.
     public EventSystem(IRandomGenerator rng)
     {
         randomGenerator = rng;
-        possibleEvents = new List<IEvent>();
     }
 
     public void RegisterEvent(IEvent gameEvent)
@@ -14,21 +14,19 @@
         possibleEvents.Add(gameEvent);
     }
 
-    // Called periodically to trigger random events
     public void TriggerRandomEvent(Airport airport)
     {
-        if (possibleEvents.Count == 0) return;
+        // Choose a random event from the list.
+        if (possibleEvents.Count == 0)
+            return;
 
-        int eventIndex = randomGenerator.Next(0, possibleEvents.Count);
-        IEvent chosenEvent = possibleEvents[eventIndex];
-
-        chosenEvent.Trigger(airport);
+        int index = randomGenerator.Next(0, possibleEvents.Count);
+        possibleEvents[index].Trigger(airport);
     }
 
-    // Directly trigger specific event types (e.g., delays)
     public void TriggerDelayEvent(Flight flight)
     {
-        var delayEvent = new FlightDelayEvent(flight);
-        delayEvent.Trigger(null); // null if Airport isn't needed here
+        // For example: create and trigger a FlightDelayEvent.
+        new FlightDelayEvent(flight).Trigger(null); // or pass airport if available
     }
 }

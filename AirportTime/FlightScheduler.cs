@@ -4,7 +4,7 @@
 // Plane class to represent planes that will land on the runways
 public class FlightScheduler
 {
-    private Dictionary<int, List<Flight>> scheduledFlights = new Dictionary<int, List<Flight>>();
+    private readonly Dictionary<int, List<Flight>> scheduledFlights = new();
 
     public void ScheduleFlight(Flight flight, int scheduledTick)
     {
@@ -12,17 +12,13 @@ public class FlightScheduler
         {
             scheduledFlights[scheduledTick] = new List<Flight>();
         }
-
         scheduledFlights[scheduledTick].Add(flight);
     }
 
     public List<Flight> GetFlightsAtTick(int tick)
     {
-        if (scheduledFlights.TryGetValue(tick, out var flights))
-        {
-            return flights;
-        }
-
-        return new List<Flight>();
+        return scheduledFlights.TryGetValue(tick, out var flights)
+            ? flights
+            : new List<Flight>();
     }
 }

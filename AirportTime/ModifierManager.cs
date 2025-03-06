@@ -1,6 +1,6 @@
 ﻿public class ModifierManager
 {
-    private List<Modifier> modifiers = new List<Modifier>();
+    private readonly List<Modifier> modifiers = new();
 
     public void AddModifier(string name, double value)
     {
@@ -9,45 +9,38 @@
 
     public void RemoveModifier(string name)
     {
-        modifiers.RemoveAll(m => m.Name == name);
+        modifiers.RemoveAll(m => m.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
-    // Apply other modifiers, if any.
+    // Applies all stored modifiers to a base value.
     public double ApplyModifiers(double baseValue)
     {
-        double modifiedValue = baseValue;
+        double result = baseValue;
         foreach (var modifier in modifiers)
         {
-            modifiedValue *= modifier.Value;
+            // For simplicity, assume modifiers are additive.
+            result *= modifier.Value;
         }
-        return modifiedValue;
+        return result;
     }
 
-    // Calculate revenue with delay penalties applied.
+    // Calculates revenue for a flight by applying delay penalties.
     public double CalculateRevenue(Flight flight)
     {
-        double baseFare = 100;
-        double baseRevenue = flight.Passengers * baseFare;
-
-        // Compute the delay penalty multiplier.
+        // Example base revenue calculation.
+        double baseRevenue = flight.Passengers * 10;
         double delayMultiplier = GetDelayMultiplier(flight);
-
-        // Apply any additional modifiers.
-        double revenueWithModifiers = ApplyModifiers(baseRevenue);
-
-        // Final revenue is reduced by the delay penalty.
-        return revenueWithModifiers * delayMultiplier;
+        return baseRevenue * delayMultiplier;
     }
 
-    // Every 30 seconds (assumed 1200 ticks) causes a 5% revenue reduction, capped at 40%.
+    // Every 1200 ticks of delay reduces revenue by 5%, capped at a 40% reduction.
     private double GetDelayMultiplier(Flight flight)
     {
-        const int TicksPerPenaltyPeriod = 1200; // 30 seconds * 40 ticks per second
-        int delayTicks = flight.ScheduledLandingTime - flight.OriginalScheduledLandingTime;
-        int delayPeriods = delayTicks / TicksPerPenaltyPeriod;
-
-        // Each period reduces revenue by 5%, up to a max of 40%
-        double penaltyPercentage = Math.Min(delayPeriods * 0.05, 0.40);
-        return 1.0 - penaltyPercentage;
+        int delayTicks = flight.GetDelayTicks();
+        int penaltyPeriods = delayTicks / 1200;
+        double penalty = penaltyPeriods * 0.05;
+        if (penalty > 0.40)
+            penalty = 0.40;
+        return 1.0 - penalty;
     }
 }
