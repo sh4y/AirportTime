@@ -1,0 +1,30 @@
+name: .NET Build Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build .NET Projects
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET 6 SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore NuGet Packages
+        run: dotnet restore AirportTime.sln
+
+      - name: Build Solution
+        run: dotnet build AirportTime.sln --configuration Release --no-restore
+
+      - name: Run Tests
+        run: dotnet test AirportTime.sln --configuration Release --no-restore
