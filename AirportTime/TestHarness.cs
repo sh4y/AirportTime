@@ -28,13 +28,6 @@
 
     private void ScheduleEvents()
     {
-        // Schedule a Tier 1 Runway unlock event.
-        eventScheduler.ScheduleEvent(new ScheduledEvent(10, tick =>
-        {
-            shop.BuyItem("Tier 1 Runway", airport);
-            runwayManager.UnlockRunway(RunwayTier.Tier1);
-            logger.Log($"[Tick {tick}] Tier 1 Runway unlocked.");
-        }));
 
         // Schedule a Tier 2 Runway unlock event.
         eventScheduler.ScheduleEvent(new ScheduledEvent(20, tick =>
@@ -64,8 +57,12 @@
 
         for (int tick = 1; tick <= 60; tick++)
         {
-            treasury.AccumulateGold();
+            this.airport.Tick(tick);
             eventScheduler.ProcessEvents(tick);
+            if (this.treasury.GetBalance() > 100)
+            {
+                shop.BuyItem("Tier 1 Runway", airport);
+            }
             logger.Log($"Test Tick {tick} completed.");
         }
 

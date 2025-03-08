@@ -21,7 +21,7 @@ public class Shop
     private void InitializeItems()
     {
         // Use the RunwayTier enum for clarity.
-        itemsForSale.Add(new Item("Tier 1 Runway", "Basic runway for small planes.", 5000, ItemType.Runway, (int)RunwayTier.Tier1));
+        itemsForSale.Add(new Item("Tier 1 Runway", "Basic runway for small planes.", 100, ItemType.Runway, (int)RunwayTier.Tier1));
         itemsForSale.Add(new Item("Tier 2 Runway", "Medium runway suitable for medium planes.", 10000, ItemType.Runway, (int)RunwayTier.Tier2));
         itemsForSale.Add(new Item("Tier 3 Runway", "Large runway for jumbo jets.", 20000, ItemType.Runway, (int)RunwayTier.Tier3));
     }

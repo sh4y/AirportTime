@@ -31,8 +31,6 @@ public static class ConsoleUI
 
         Console.WriteLine("\n--- Log ---");
         airport.GameLogger.DisplayRecentLogs(5); // Assumes GameLogger has this method
-
-        Console.WriteLine("\nPress any key to proceed to the next tick...");
-        Console.ReadKey();
+        
     }
 }

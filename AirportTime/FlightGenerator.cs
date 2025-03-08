@@ -13,7 +13,7 @@
         string flightNumber = "AA" + randomGenerator.Next(100, 1000);
 
         // Randomize between small, medium, and large planes (0, 1, or 2)
-        PlaneSize planeSize = (PlaneSize)randomGenerator.Next(0, 3);
+        PlaneSize planeSize = (PlaneSize)randomGenerator.Next(0,0);
 
         // Generate a random weight for the plane between 10,000 and 80,000
         Plane plane = new Plane(flightNumber, planeSize, randomGenerator.Next(10000, 80000));

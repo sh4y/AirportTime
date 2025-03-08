@@ -48,5 +48,8 @@ public class TickManager
     {
         CurrentTick++;
         OnTick?.Invoke(CurrentTick);
+        
     }
+    
+    public bool IsRunning() => isRunning;
 }
