@@ -55,7 +55,7 @@ public class FlightProcessingSystem
         Console.WriteLine($"\nFlight {flight.FlightNumber} requires landing. Please assign a runway:");
         for (int i = 0; i < availableRunways.Count; i++)
         {
-            Console.WriteLine($"{i + 1}. {availableRunways[i].RunwayID} (Length: {availableRunways[i].Length}m)");
+            Console.WriteLine($"{i + 1}. {availableRunways[i].Name} (Length: {availableRunways[i].Length}m)");
         }
         Console.Write("Enter the number corresponding to your chosen runway: ");
         string input = Console.ReadLine();
@@ -70,7 +70,7 @@ public class FlightProcessingSystem
             double revenue = modifierManager.CalculateRevenue(flight);
             treasury.AddFunds(revenue, "Flight Revenue");
 
-            gameLogger.Log($"Flight {flight.FlightNumber} landed successfully on {selectedRunway.RunwayID} and generated {revenue:C} in revenue.");
+            gameLogger.Log($"Flight {flight.FlightNumber} landed successfully on {selectedRunway.Name} and generated {revenue:C} in revenue.");
         }
         else
         {

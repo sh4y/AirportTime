@@ -5,12 +5,12 @@ public class GameSimulation
     public static void Msain()
     {
         // Start with 0 gold
-        GameLogger g = new GameLogger();
+        GameLogger g = new GameLogger("GameLogs.db");
 
         Treasury playerTreasury = new Treasury(g);
         Shop shop = new Shop(playerTreasury, g);
         RunwayMaintenanceSystem maintenanceSystem = new RunwayMaintenanceSystem();
-        RunwayManager runwayManager = new RunwayManager(maintenanceSystem);
+        RunwayManager runwayManager = new RunwayManager(maintenanceSystem, g);
 
         Console.WriteLine("Starting with 0 gold.");
 

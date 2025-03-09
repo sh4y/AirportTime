@@ -8,16 +8,18 @@
     public EventSystem EventSystem { get; private set; }
     public GameLogger GameLogger { get; private set; }
     public ModifierManager ModifierManager { get; private set; }
+    private readonly IRandomGenerator RandomGenerator;
 
     public Airport(string name, double startingGold)
     {
         Name = name;
-        GameLogger = new GameLogger();
+        GameLogger = new GameLogger("GameLogs.db");
         Treasury = new Treasury(GameLogger);
-        RunwayManager = new RunwayManager(new RunwayMaintenanceSystem());
+        RunwayManager = new RunwayManager(new RunwayMaintenanceSystem(), GameLogger);
         Shop = new Shop(Treasury, GameLogger);
         FlightScheduler = new FlightScheduler();
-        EventSystem = new EventSystem(new RandomGenerator()); // Assumes DefaultRandomGenerator implements IRandomGenerator
+        RandomGenerator = new RandomGenerator();
+        EventSystem = new EventSystem(RandomGenerator); // Assumes DefaultRandomGenerator implements IRandomGenerator
         ModifierManager = new ModifierManager();
     }
 
@@ -34,9 +36,6 @@
         {
             EventSystem.TriggerRandomEvent(this);
         }
-
-        // Perform runway maintenance and other routine operations
-        RunwayManager.PerformMaintenance(Treasury, GameLogger);
     }
 
     private void ProcessScheduledFlights(int currentTick)
@@ -53,11 +52,15 @@
         if (RunwayManager.CanLand(flight.Plane))
         {
             var availableRunway = RunwayManager.GetAvailableRunway(flight.Plane);
-            flight.AttemptLanding(availableRunway);
-
+            if (!flight.AttemptLanding(availableRunway))
+            {
+                GameLogger.Log($"Flight {flight.FlightNumber} failed landing.");
+                EventSystem.TriggerDelayEvent(flight);
+                return;
+            }
+            RunwayManager.HandleLanding(availableRunway.Name, new Weather(RandomGenerator), 10);
             double revenue = ModifierManager.CalculateRevenue(flight);
             Treasury.AddFunds(revenue, "Flight Revenue");
-
             GameLogger.Log($"Flight {flight.FlightNumber} landed successfully.");
         }
         else

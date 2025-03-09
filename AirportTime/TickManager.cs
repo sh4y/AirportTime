@@ -5,8 +5,9 @@ public class TickManager
     public int CurrentTick { get; private set; }
     private System.Timers.Timer timer;
     private int tickInterval; // milliseconds per tick
-    private readonly int defaultInterval = 25; // 40 ticks per second
+    private readonly int defaultInterval = 800; // 40 ticks per second
     private bool isRunning;
+    private bool isPaused;
 
     public event Action<int> OnTick;
 
@@ -25,6 +26,7 @@ public class TickManager
             isRunning = true;
             timer.Interval = tickInterval;
             timer.Start();
+            isPaused = false;
         }
     }
 
@@ -34,6 +36,8 @@ public class TickManager
         {
             timer.Stop();
             isRunning = false;
+            isPaused = true;
+            
         }
     }
 
@@ -52,4 +56,6 @@ public class TickManager
     }
     
     public bool IsRunning() => isRunning;
+    
+    public bool IsPaused() => isPaused;
 }

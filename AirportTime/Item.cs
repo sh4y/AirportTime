@@ -1,13 +1,13 @@
 ﻿// File: AirportTime/Item.cs
 // This class now implements IPurchasable so that items can define additional behavior on purchase.
-public class Item : IPurchasable
+public abstract class Item : IPurchasable
 {
     public string Name { get; private set; }
     public string Description { get; private set; }
     public double Price { get; private set; }
     public ItemType Type { get; private set; }
-    public int Tier { get; private set; }
-    public int Availability { get; private set; } // Number of available units. Defaults to 1.
+    public int ItemTier { get; private set; }
+    public int Availability { get; private set; }
 
     /// <summary>
     /// Creates a new Item with the specified properties.
@@ -24,7 +24,7 @@ public class Item : IPurchasable
         Description = description;
         Price = price;
         Type = type;
-        Tier = tier;
+        ItemTier = tier;
         Availability = availability;
     }
 
@@ -54,20 +54,8 @@ public class Item : IPurchasable
     /// <param name="airport">The airport context used for logging.</param>
     public void OnPurchase(Airport airport)
     {
-        if (!Purchase())
-        {
-            // If already sold out, log the message accordingly.
-            airport?.GameLogger?.Log($"[OnPurchase] Item {Name} is sold out and cannot be purchased.");
-            return;
-        }
+        airport.GameLogger.Log($"✅ Purchased {Name} for {Price:C}.");
 
-        // Log the successful purchase and remaining availability.
-        airport?.GameLogger?.Log($"[OnPurchase] Item purchased: {Name} (Tier {Tier}). {Availability} remaining.");
-
-        if (IsSoldOut())
-        {
-            airport?.GameLogger?.Log($"[OnPurchase] Item {Name} is now sold out.");
-        }
     }
 
     /// <summary>
@@ -76,6 +64,8 @@ public class Item : IPurchasable
     public override string ToString()
     {
         string availabilityStatus = IsSoldOut() ? "Sold Out" : Availability.ToString();
-        return $"{Name} (Tier {Tier}) - {Description} - Price: {Price:C} - Available: {availabilityStatus}";
+        return $"{Name} (Tier {ItemTier}) - {Description} - Price: {Price:C} - Available: {availabilityStatus}";
     }
+
+
 }

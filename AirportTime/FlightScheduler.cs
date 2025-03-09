@@ -21,4 +21,13 @@ public class FlightScheduler
             ? flights
             : new List<Flight>();
     }
+
+    public List<Flight> GetUnlandedFlights()
+    {
+        return scheduledFlights.Values
+            .SelectMany(flightList => flightList) // Flatten all lists into a single sequence
+            .Where(flight => !flight.HasLanded)   // Filter flights that haven't landed
+            .ToList();
+    }
+
 }

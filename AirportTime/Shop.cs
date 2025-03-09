@@ -5,7 +5,7 @@ using System.Linq;
 // This allows the game logic to react appropriately to each outcome.
 public class Shop
 {
-    private readonly List<Item> itemsForSale;
+    private readonly List<IPurchasable> itemsForSale;
     private readonly Treasury treasury;
     private readonly GameLogger logger;
 
@@ -13,7 +13,7 @@ public class Shop
     {
         this.treasury = treasury;
         this.logger = logger;
-        itemsForSale = new List<Item>();
+        itemsForSale = new List<IPurchasable>();
 
         InitializeItems();
     }
@@ -21,9 +21,8 @@ public class Shop
     private void InitializeItems()
     {
         // Use the RunwayTier enum for clarity.
-        itemsForSale.Add(new Item("Tier 1 Runway", "Basic runway for small planes.", 100, ItemType.Runway, (int)RunwayTier.Tier1));
-        itemsForSale.Add(new Item("Tier 2 Runway", "Medium runway suitable for medium planes.", 10000, ItemType.Runway, (int)RunwayTier.Tier2));
-        itemsForSale.Add(new Item("Tier 3 Runway", "Large runway for jumbo jets.", 20000, ItemType.Runway, (int)RunwayTier.Tier3));
+// When setting up the shop in your airport initialization:
+        itemsForSale.Add(new SmallRunway("Small Runway", 100, "Basic runway suitable for small aircraft"));
     }
 
     public void ViewItemsForSale()
@@ -31,7 +30,7 @@ public class Shop
         logger.Log("Items for Sale:");
         foreach (var item in itemsForSale)
         {
-            logger.Log($"{item.Name} (Tier {item.Tier}) - {item.Description} - Price: {item.Price:C}");
+            logger.Log($"{item.Name} (Tier {item.ItemTier}) - {item.Description} - Price: {item.Price:C}");
         }
     }
 
@@ -57,7 +56,7 @@ public class Shop
     public PurchaseResult BuyItem(RunwayTier tier, Airport airport = null)
     {
         var item = itemsForSale.FirstOrDefault(i =>
-            i.Type == ItemType.Runway && i.Tier == (int)tier);
+            i.Type == ItemType.Runway && i.ItemTier == (int)tier);
         if (item == null)
         {
             logger.Log("Runway item not found in the shop.");

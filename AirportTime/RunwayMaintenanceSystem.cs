@@ -1,10 +1,6 @@
-﻿
-// Game simulation class to simulate the purchase of items and running the airport
-// Flight class to represent flights and handle landing procedure
-// Plane class to represent planes that will land on the runways
-public class RunwayMaintenanceSystem
+﻿public class RunwayMaintenanceSystem
 {
-    private Dictionary<string, int> runwayWearLevels;
+    private Dictionary<string, Runway> registeredRunways;
     private const int WearIncrementPerLanding = 10;
     public const int CriticalWearThreshold = 50;
     public const int FullDegradationThreshold = 100;
@@ -12,49 +8,76 @@ public class RunwayMaintenanceSystem
 
     public RunwayMaintenanceSystem()
     {
-        runwayWearLevels = new Dictionary<string, int>();
+        // Instead of storing just wear levels, we now store references to actual Runway objects.
+        registeredRunways = new Dictionary<string, Runway>();
     }
 
-    public void RegisterRunway(string runwayID)
+    public void RegisterRunway(Runway runway)
     {
-        if (!runwayWearLevels.ContainsKey(runwayID))
+        if (!registeredRunways.ContainsKey(runway.Name))
         {
-            runwayWearLevels[runwayID] = 0; // New runways start at 0% wear
+            registeredRunways[runway.Name] = runway;
         }
     }
 
     // Apply wear based on traffic and weather conditions
+    // But the actual increment logic is offloaded to the runway’s own method
     public void ApplyWear(string runwayID, Weather weather, int trafficVolume)
     {
-        if (runwayWearLevels.ContainsKey(runwayID))
+        if (registeredRunways.TryGetValue(runwayID, out var runway))
         {
-            int wearIncrease = WearIncrementPerLanding + (trafficVolume / 10); // More traffic = more wear
+            // Calculate how much wear we *want* to apply
+            int wearIncrease = WearIncrementPerLanding + (trafficVolume / 10);
             int weatherImpact = weather.GetWeatherImpact() * WeatherImpactMultiplier;
-            runwayWearLevels[runwayID] += wearIncrease + weatherImpact;
+            int totalWear = wearIncrease + weatherImpact;
 
-            if (runwayWearLevels[runwayID] >= CriticalWearThreshold)
+            // Delegate the actual update to the runway so it manages its own state
+            runway.ApplyWear(totalWear);
+
+            // Optional: Issue global warnings or logs from the system perspective
+            if (runway.WearLevel >= CriticalWearThreshold && runway.WearLevel < FullDegradationThreshold)
             {
-                Console.WriteLine($"⚠️ Warning: Runway {runwayID} is at {runwayWearLevels[runwayID]}% wear and needs maintenance soon!");
+                Console.WriteLine($"⚠️ Warning: Runway {runway.Name} is at {runway.WearLevel}% wear and needs maintenance soon!");
             }
-
-            if (runwayWearLevels[runwayID] >= FullDegradationThreshold)
+            else if (runway.WearLevel >= FullDegradationThreshold)
             {
-                Console.WriteLine($"❌ Runway {runwayID} is fully degraded and is now CLOSED for use.");
+                Console.WriteLine($"❌ Runway {runway.Name} is fully degraded and is now CLOSED for use.");
             }
         }
     }
+    
+    /// <summary>
+    /// Calculates the total repair cost based on the given <paramref name="wearLevel"/>.
+    /// If wear is >= 80%, applies a 1.4x multiplier.
+    /// </summary>
+    /// <param name="wearLevel">The current wear level of the runway.</param>
+    /// <returns>The total repair cost.</returns>
+    public double CalculateRepairCost(int wearLevel)
+    {
+        // Base cost
+        double baseCost = wearLevel * 15;
+
+        // Apply a 1.4x multiplier if wear >= 80%
+        if (wearLevel >= 80)
+            return baseCost * 1.4;
+    
+        return baseCost;
+    }
+
 
     public void RepairRunway(string runwayID)
     {
-        if (runwayWearLevels.ContainsKey(runwayID))
+        if (registeredRunways.TryGetValue(runwayID, out var runway))
         {
-            runwayWearLevels[runwayID] = 0;
+            runway.Repair();
             Console.WriteLine($"✅ Runway {runwayID} has been fully repaired and is back in service.");
         }
     }
 
     public int GetWearLevel(string runwayID)
     {
-        return runwayWearLevels.ContainsKey(runwayID) ? runwayWearLevels[runwayID] : 0;
+        if (registeredRunways.TryGetValue(runwayID, out var runway))
+            return runway.WearLevel;
+        return 0;
     }
 }

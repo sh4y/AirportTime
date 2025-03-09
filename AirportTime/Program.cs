@@ -9,72 +9,62 @@ namespace AirportTime
         {
             var services = new ServiceCollection();
 
-            // Core single-instance services
+            // Infrastructure & core services
             services.AddSingleton<IRandomGenerator, RandomGenerator>();
-            services.AddSingleton<GameLogger>();
+            // Here, we supply the parameter "GameLogs.db" to GameLogger's constructor
+            services.AddSingleton<GameLogger>(provider => 
+                new GameLogger("GameLogs.db"));        
             services.AddSingleton<Weather>();
             services.AddSingleton<RunwayMaintenanceSystem>();
             services.AddSingleton<TickManager>();
 
             // Airport-related services
-            services.AddSingleton<Treasury>(); // Manageable starting gold
+            services.AddSingleton<Treasury>(sp => new Treasury(sp.GetRequiredService<GameLogger>()));
             services.AddSingleton<RunwayManager>();
             services.AddSingleton<FlightScheduler>();
-            services.AddSingleton<Shop>();
+            services.AddSingleton<FlightGenerator>();
+            services.AddSingleton<Shop>(); // Items initialized internally
             services.AddSingleton<EventSystem>();
             services.AddSingleton<ModifierManager>();
 
-            // Single Airport instance for testing
-            services.AddSingleton<Airport>(p => new Airport("test", 90));
+            // Single airport instance
+            services.AddSingleton<Airport>(p => new Airport("test",90) );
+
+            // Input Handler
+            services.AddSingleton<InputHandler>();
 
             var serviceProvider = services.BuildServiceProvider();
 
-            // Setup single airport and components
+            // Resolve services once before the loop
             var airport = serviceProvider.GetRequiredService<Airport>();
-
             var tickManager = serviceProvider.GetRequiredService<TickManager>();
+            var inputHandler = serviceProvider.GetRequiredService<InputHandler>();
+            var logger = serviceProvider.GetRequiredService<GameLogger>();
             var weather = serviceProvider.GetRequiredService<Weather>();
-            var fs = new FlightGenerator(serviceProvider.GetRequiredService<IRandomGenerator>());
+            var flightGen = serviceProvider.GetRequiredService<FlightGenerator>();
 
-            // Simple tick loop for manageable testing
             tickManager.OnTick += (currentTick) =>
             {
-            // Airport processing (flights, runway maintenance, gold)
+
                 airport.Tick(currentTick);
 
-                // Basic console output for clarity
-                Console.Clear();
                 ConsoleUI.DisplayStatus(airport, currentTick);
-                
-                if (Console.KeyAvailable)
-                {
-                    var key = Console.ReadKey(true).Key;
 
-                    if (key == ConsoleKey.Q)
-                        tickManager.Pause();
-
-                    else if (key == ConsoleKey.F)
-                    {
-                        var f = fs.GenerateRandomFlight(currentTick, 10);
-                        airport.FlightScheduler.ScheduleFlight(f, currentTick+100);
-                    }
-                }
-
+                inputHandler.HandleInput(currentTick);
             };
-            // Properly integrated ConsoleUI call:
 
             tickManager.SetSpeedMultiplier(1);
             tickManager.Start();
 
-            Console.WriteLine("Game running... Press 'Q' to quit at any time.");
+            logger.Log("Simulation started. Press 'Q' to quit.");
 
-            // Wait until simulation paused by user
-            while (tickManager.IsRunning())
+            // Keep simulation alive until user quits
+            while (tickManager.IsRunning() || tickManager.IsPaused())
             {
                 System.Threading.Thread.Sleep(100);
             }
 
-            Console.WriteLine("Simulation ended. Press any key to exit...");
+            logger.Log("Simulation ended. Press any key to exit.");
             Console.ReadKey();
         }
     }

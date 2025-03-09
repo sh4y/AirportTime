@@ -1,6 +1,6 @@
 public enum RunwayTier
 {
-    Tier1,
-    Tier2,
-    Tier3
+    Tier1 = 1,
+    Tier2 = 2,
+    Tier3 = 3
 }

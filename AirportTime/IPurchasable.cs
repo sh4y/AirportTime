@@ -4,8 +4,11 @@
 // Plane class to represent planes that will land on the runways
 public interface IPurchasable
 {
-    string Name { get; }
-    double Price { get; }
-    string Description { get; }
+    public string Name { get; }
+    public string Description { get; }
+    public double Price { get; }
+    public ItemType Type { get; }
+    public int ItemTier { get; }
+    public int Availability { get; } // Number of available units. Defaults to 1.
     void OnPurchase(Airport airport);
 }

@@ -8,6 +8,8 @@
     public int OriginalScheduledLandingTime { get; private set; }
     public int Passengers { get; private set; }
 
+    public bool HasLanded { get; private set; } = false;
+
     public Flight(string flightNumber, Plane plane, FlightType type, FlightPriority priority, int scheduledLandingTime, int passengers)
     {
         FlightNumber = flightNumber;
@@ -19,15 +21,18 @@
         Passengers = passengers;
     }
 
-    public void AttemptLanding(Runway runway)
+    public bool AttemptLanding(Runway runway)
     {
         if (runway.CanLand(Plane))
         {
             Console.WriteLine($"Flight {FlightNumber} can land.");
+            HasLanded = true;
+            return true;
         }
         else
         {
             Console.WriteLine($"Flight {FlightNumber} cannot land; no suitable runway.");
+            return false;
         }
     }
 
@@ -72,6 +77,6 @@
     public override string ToString()
     {
         return $"Flight {FlightNumber} ({Type}, {Priority}) - Scheduled: {ScheduledLandingTime} (Original: {OriginalScheduledLandingTime}), " +
-               $"Passengers: {Passengers}, Delay: {GetDelayTicks()} ticks";
+               $"Passengers: {Passengers}, Delay: {GetDelayTicks()} ticks, Has Landed: {HasLanded}";
     }
 }

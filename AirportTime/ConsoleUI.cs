@@ -16,7 +16,7 @@ public static class ConsoleUI
         airport.RunwayManager.DisplayRunwayInfo();
 
         Console.WriteLine("\n--- Upcoming Flights ---");
-        var upcomingFlights = airport.FlightScheduler.GetFlightsAtTick(currentTick + 1);
+        var upcomingFlights = airport.FlightScheduler.GetUnlandedFlights();
         if (upcomingFlights.Count == 0)
         {
             Console.WriteLine("No flights scheduled.");
@@ -25,7 +25,7 @@ public static class ConsoleUI
         {
             foreach (var flight in upcomingFlights)
             {
-                Console.WriteLine($"- Flight {flight.FlightNumber} ({flight.Type}), Passengers: {flight.Passengers}");
+                Console.WriteLine($"{flight.ToString()}");
             }
         }
 
