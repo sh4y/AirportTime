@@ -19,7 +19,8 @@ namespace AirportTime
             services.AddSingleton<TickManager>();
 
             // Airport-related services
-            services.AddSingleton<Treasury>(sp => new Treasury(sp.GetRequiredService<GameLogger>()));
+            services.AddSingleton<Treasury>(sp => 
+                new Treasury(sp.GetRequiredService<GameLogger>(), new TransactionLogStore()));
             services.AddSingleton<RunwayManager>();
             services.AddSingleton<FlightScheduler>();
             services.AddSingleton<FlightGenerator>();

@@ -7,7 +7,7 @@ public class GameSimulation
         // Start with 0 gold
         GameLogger g = new GameLogger("GameLogs.db");
 
-        Treasury playerTreasury = new Treasury(g);
+        Treasury playerTreasury = new Treasury(g, new TransactionLogStore());
         Shop shop = new Shop(playerTreasury, g);
         RunwayMaintenanceSystem maintenanceSystem = new RunwayMaintenanceSystem();
         RunwayManager runwayManager = new RunwayManager(maintenanceSystem, g);

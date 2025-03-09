@@ -14,7 +14,7 @@
     {
         Name = name;
         GameLogger = new GameLogger("GameLogs.db");
-        Treasury = new Treasury(GameLogger);
+        Treasury = new Treasury(GameLogger, new TransactionLogStore());
         RunwayManager = new RunwayManager(new RunwayMaintenanceSystem(), GameLogger);
         Shop = new Shop(Treasury, GameLogger);
         FlightScheduler = new FlightScheduler();
