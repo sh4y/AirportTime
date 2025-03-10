@@ -1,6 +1,17 @@
-﻿public class ModifierManager
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class ModifierManager
 {
     private readonly List<Modifier> modifiers = new();
+    private readonly Revenue revenueCalculator;  // Dependency on Revenue
+
+    // Pass a Revenue instance into the constructor.
+    public ModifierManager(Revenue revenueCalculator)
+    {
+        this.revenueCalculator = revenueCalculator;
+    }
 
     public void AddModifier(string name, double value)
     {
@@ -12,25 +23,30 @@
         modifiers.RemoveAll(m => m.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
-    // Applies all stored modifiers to a base value.
+    // Applies all stored modifiers multiplicatively to a base value.
     public double ApplyModifiers(double baseValue)
     {
-        double result = baseValue;
-        foreach (var modifier in modifiers)
-        {
-            // For simplicity, assume modifiers are additive.
-            result *= modifier.Value;
-        }
-        return result;
+        return modifiers.Aggregate(baseValue, (result, modifier) => result * modifier.Value);
     }
 
-    // Calculates revenue for a flight by applying delay penalties.
+    /// <summary>
+    /// Calculates revenue for a flight by:
+    /// 1. Retrieving the base revenue from the Revenue class.
+    /// 2. Applying a delay penalty multiplier.
+    /// 3. Adjusting with additional modifiers.
+    /// </summary>
     public double CalculateRevenue(Flight flight)
     {
-        // Example base revenue calculation.
-        double baseRevenue = flight.Passengers * 10;
+        // Get the base revenue from the Revenue class.
+        double baseRevenue = revenueCalculator.CalculateFlightRevenue(flight);
+
+        // Apply delay penalty multiplier.
         double delayMultiplier = GetDelayMultiplier(flight);
-        return baseRevenue * delayMultiplier;
+        double revenueAfterDelay = baseRevenue * delayMultiplier;
+
+        // Apply any additional modifiers.
+        double finalRevenue = ApplyModifiers(revenueAfterDelay);
+        return finalRevenue;
     }
 
     // Every 1200 ticks of delay reduces revenue by 5%, capped at a 40% reduction.
@@ -38,9 +54,7 @@
     {
         int delayTicks = flight.GetDelayTicks();
         int penaltyPeriods = delayTicks / 1200;
-        double penalty = penaltyPeriods * 0.05;
-        if (penalty > 0.40)
-            penalty = 0.40;
+        double penalty = Math.Min(penaltyPeriods * 0.05, 0.40);
         return 1.0 - penalty;
     }
 }

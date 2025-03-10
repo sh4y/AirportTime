@@ -1,14 +1,22 @@
-﻿public class Flight
+﻿using System;
+
+public class Flight
 {
     public string FlightNumber { get; private set; }
     public Plane Plane { get; private set; }
     public FlightType Type { get; private set; }
     public FlightPriority Priority { get; private set; }
+    
     public int ScheduledLandingTime { get; private set; }
     public int OriginalScheduledLandingTime { get; private set; }
     public int Passengers { get; private set; }
 
+    // Flight state
     public bool HasLanded { get; private set; } = false;
+    public FlightStatus Status { get; private set; } = FlightStatus.Scheduled;
+
+    // Example threshold: If total delay ticks exceed this, cancel automatically
+    private readonly int _cancelDelayThreshold = 30;
 
     public Flight(string flightNumber, Plane plane, FlightType type, FlightPriority priority, int scheduledLandingTime, int passengers)
     {
@@ -17,29 +25,63 @@
         Type = type;
         Priority = priority;
         ScheduledLandingTime = scheduledLandingTime;
-        OriginalScheduledLandingTime = scheduledLandingTime;  // Capture the original landing time
+        OriginalScheduledLandingTime = scheduledLandingTime;  // keep track of the original landing time
         Passengers = passengers;
     }
 
     public bool AttemptLanding(Runway runway)
     {
+        // If canceled, we don't proceed with landing
+        if (Status == FlightStatus.Canceled)
+        {
+            Console.WriteLine($"Flight {FlightNumber} is canceled and cannot land.");
+            return false;
+        }
+
         if (runway.CanLand(Plane))
         {
             Console.WriteLine($"Flight {FlightNumber} can land.");
             HasLanded = true;
+            Status = FlightStatus.Landed;
             return true;
         }
         else
         {
-            Console.WriteLine($"Flight {FlightNumber} cannot land; no suitable runway.");
+            Console.WriteLine($"Flight {FlightNumber} cannot land; no suitable runway available.");
             return false;
         }
     }
 
-    // Delay the flight by a number of ticks, leaving the original time unchanged.
+    /// <summary>
+    /// Increments the scheduled landing time by the given delay ticks. 
+    /// Automatically cancels the flight if total delay exceeds the threshold.
+    /// </summary>
     public void Delay(int delayTicks)
     {
+        // If already canceled or landed, no further updates
+        if (Status == FlightStatus.Canceled || HasLanded) return;
+
         ScheduledLandingTime += delayTicks;
+        Status = FlightStatus.Delayed;
+
+        // Check if total delay passes the cancellation threshold
+        if (GetDelayTicks() > _cancelDelayThreshold)
+        {
+            CancelFlight($"Exceeded cancellation threshold of {_cancelDelayThreshold} delay ticks.");
+        }
+    }
+
+    /// <summary>
+    /// Cancels the flight and prevents further attempts to land.
+    /// </summary>
+    public void CancelFlight(string reason)
+    {
+        if (Status == FlightStatus.Canceled) return;
+
+        Status = FlightStatus.Canceled;
+        Console.WriteLine($"Flight {FlightNumber} canceled. Reason: {reason}");
+        
+        //@todo: add punishment
     }
 
     // Returns the total number of ticks the flight is delayed.
@@ -60,10 +102,6 @@
     /// capped at a maximum total penalty of 'maxPenalty' (e.g., 0.40 for 40%).
     /// The returned multiplier will be between 1.0 (no penalty) and 0.6 (maximum penalty).
     /// </summary>
-    /// <param name="ticksPerPenaltyPeriod">Number of ticks that constitute one penalty period.</param>
-    /// <param name="penaltyPerPeriod">Penalty per period (e.g., 0.05 for 5%).</param>
-    /// <param name="maxPenalty">Maximum penalty (e.g., 0.40 for 40%).</param>
-    /// <returns>The multiplier to apply to the base revenue.</returns>
     public double GetDelayPenaltyMultiplier(int ticksPerPenaltyPeriod, double penaltyPerPeriod, double maxPenalty)
     {
         int delayTicks = GetDelayTicks();
@@ -76,7 +114,9 @@
     // Override ToString for a useful flight summary.
     public override string ToString()
     {
-        return $"Flight {FlightNumber} ({Type}, {Priority}) - Scheduled: {ScheduledLandingTime} (Original: {OriginalScheduledLandingTime}), " +
-               $"Passengers: {Passengers}, Delay: {GetDelayTicks()} ticks, Has Landed: {HasLanded}";
+        return $"Flight {FlightNumber} ({Type}, {Priority}) - " +
+               $"Scheduled: {ScheduledLandingTime} (Original: {OriginalScheduledLandingTime}), " +
+               $"Passengers: {Passengers}, Delay: {GetDelayTicks()} ticks, " +
+               $"Has Landed: {HasLanded}, Status: {Status}";
     }
 }

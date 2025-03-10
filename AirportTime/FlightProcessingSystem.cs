@@ -31,7 +31,7 @@ public class FlightProcessingSystem
         while (landingQueue.Count > 0)
         {
             Flight flight = landingQueue.Dequeue();
-            ProcessManualLanding(flight);
+            ProcessLanding(flight);
         }
     }
 
@@ -40,7 +40,7 @@ public class FlightProcessingSystem
     /// If a valid selection is made, attempts the landing, calculates revenue, and logs the outcome.
     /// </summary>
     /// <param name="flight">The flight to be landed.</param>
-    private void ProcessManualLanding(Flight flight)
+    private void ProcessLanding(Flight flight)
     {
         // Retrieve a list of available runways that can accommodate the plane.
         List<Runway> availableRunways = runwayManager.GetAvailableRunways(flight.Plane);

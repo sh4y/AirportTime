@@ -8,6 +8,7 @@
     public EventSystem EventSystem { get; private set; }
     public GameLogger GameLogger { get; private set; }
     public ModifierManager ModifierManager { get; private set; }
+    private Revenue AirportRevenue { get; set; }
     private readonly IRandomGenerator RandomGenerator;
 
     public Airport(string name, double startingGold)
@@ -20,7 +21,8 @@
         FlightScheduler = new FlightScheduler();
         RandomGenerator = new RandomGenerator();
         EventSystem = new EventSystem(RandomGenerator); // Assumes DefaultRandomGenerator implements IRandomGenerator
-        ModifierManager = new ModifierManager();
+        AirportRevenue = new Revenue();
+        ModifierManager = new ModifierManager(AirportRevenue);
     }
 
     public void Tick(int currentTick)
@@ -30,12 +32,6 @@
 
         // Process scheduled flights for the current tick
         ProcessScheduledFlights(currentTick);
-
-        // Trigger a random event every 60 ticks
-        if (IsRandomEventTick(currentTick))
-        {
-            EventSystem.TriggerRandomEvent(this);
-        }
     }
 
     private void ProcessScheduledFlights(int currentTick)

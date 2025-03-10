@@ -1,7 +1,7 @@
 ﻿public class RunwayMaintenanceSystem
 {
     private Dictionary<string, Runway> registeredRunways;
-    private const int WearIncrementPerLanding = 10;
+    private const int WearIncrementPerLanding = 4;
     public const int CriticalWearThreshold = 50;
     public const int FullDegradationThreshold = 100;
     private const int WeatherImpactMultiplier = 5;
@@ -22,12 +22,12 @@
 
     // Apply wear based on traffic and weather conditions
     // But the actual increment logic is offloaded to the runway’s own method
-    public void ApplyWear(string runwayID, Weather weather, int trafficVolume)
+    public void ApplyWear(string runwayID, Weather weather, int trafficVolume=0)
     {
         if (registeredRunways.TryGetValue(runwayID, out var runway))
         {
             // Calculate how much wear we *want* to apply
-            int wearIncrease = WearIncrementPerLanding + (trafficVolume / 10);
+            int wearIncrease = WearIncrementPerLanding + new Random().Next(1,7) + (trafficVolume / 10);
             int weatherImpact = weather.GetWeatherImpact() * WeatherImpactMultiplier;
             int totalWear = wearIncrease + weatherImpact;
 

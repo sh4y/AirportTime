@@ -14,19 +14,19 @@
         possibleEvents.Add(gameEvent);
     }
 
-    public void TriggerRandomEvent(Airport airport)
+    public void TriggerRandomEvent(Flight flight)
     {
         // Choose a random event from the list.
         if (possibleEvents.Count == 0)
             return;
 
         int index = randomGenerator.Next(0, possibleEvents.Count);
-        possibleEvents[index].Trigger(airport);
+        possibleEvents[index].Trigger();
     }
 
     public void TriggerDelayEvent(Flight flight)
     {
         // For example: create and trigger a FlightDelayEvent.
-        new FlightDelayEvent(flight).Trigger(null); // or pass airport if available
+        new FlightDelayEvent(flight).Trigger(); // or pass airport if available
     }
 }

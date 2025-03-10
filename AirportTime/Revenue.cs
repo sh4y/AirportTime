@@ -1,42 +1,37 @@
-﻿
-// Game simulation class to simulate the purchase of items and running the airport
-// Flight class to represent flights and handle landing procedure
-// Plane class to represent planes that will land on the runways
+﻿using System;
+
 public class Revenue
 {
-    private double totalRevenue;
+    private readonly double baseFare;
 
-    public Revenue()
+    // Optionally let users override the default baseFare if desired
+    public Revenue(double baseFare = 10)
     {
-        totalRevenue = 0;
+        this.baseFare = baseFare;
     }
 
-    // Calculate revenue based on flight type and passenger count
-    public void CalculateRevenue(Flight flight)
+    /// <summary>
+    /// Returns how much to multiply the base fare by, depending on the flight type.
+    /// Extend this logic for additional FlightTypes as needed.
+    /// </summary>
+    private double ComputeBaseFareMultiplier(FlightType type)
     {
-        double revenue = 0;
-        double baseFare = 100;
-
-        // Revenue based on flight type and passengers
-        switch (flight.Type)
+        return type switch
         {
-            case FlightType.Commercial:
-                revenue = baseFare * flight.Passengers;
-                break;
-            case FlightType.Cargo:
-                revenue = baseFare * flight.Passengers * 0.75;  // Cargo flights have reduced revenue
-                break;
-            case FlightType.VIP:
-                revenue = baseFare * flight.Passengers * 2;  // VIP flights pay double
-                break;
-            case FlightType.Emergency:
-                revenue = baseFare * flight.Passengers * 1.5;  // Emergency flights pay 50% more
-                break;
-        }
-
-        totalRevenue += revenue;
-        Console.WriteLine($"Flight {flight.FlightNumber} generated {revenue:C} in revenue.");
+            FlightType.Commercial => 1.0,
+            FlightType.Cargo      => 0.75,
+            FlightType.VIP        => 2.0,
+            FlightType.Emergency  => 1.5,
+            _                     => 1.0
+        };
     }
 
-    public double GetTotalRevenue() => totalRevenue;
+    /// <summary>
+    /// Calculates and returns revenue for a single flight, without storing any totals.
+    /// </summary>
+    public double CalculateFlightRevenue(Flight flight)
+    {
+        double multiplier = ComputeBaseFareMultiplier(flight.Type);
+        return baseFare * flight.Passengers * multiplier;
+    }
 }
