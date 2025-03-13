@@ -55,11 +55,11 @@
     public double CalculateRepairCost(int wearLevel)
     {
         // Base cost
-        double baseCost = wearLevel * 15;
+        double baseCost = wearLevel * 11;
 
         // Apply a 1.4x multiplier if wear >= 80%
         if (wearLevel >= 80)
-            return baseCost * 1.4;
+            return baseCost * 1.3;
     
         return baseCost;
     }

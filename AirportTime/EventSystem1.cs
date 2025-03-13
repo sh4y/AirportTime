@@ -2,11 +2,13 @@
 {
     private readonly IRandomGenerator randomGenerator;
     private readonly List<IEvent> possibleEvents = new List<IEvent>();
+    private readonly GameLogger gameLogger;
 
     // IRandomGenerator is injected.
-    public EventSystem(IRandomGenerator rng)
+    public EventSystem(IRandomGenerator rng, GameLogger logger)
     {
         randomGenerator = rng;
+        gameLogger = logger;
     }
 
     public void RegisterEvent(IEvent gameEvent)
@@ -24,9 +26,9 @@
         possibleEvents[index].Trigger();
     }
 
-    public void TriggerDelayEvent(Flight flight)
+    public void TriggerDelayEvent(Flight flight, int delayTicks = 5, string reason = "Delay", int currentTick = 0)
     {
-        // For example: create and trigger a FlightDelayEvent.
-        new FlightDelayEvent(flight).Trigger(); // or pass airport if available
+        // Create and trigger a FlightDelayEvent with specified delay and reason
+        new FlightDelayEvent(flight, gameLogger, delayTicks, reason, currentTick).Trigger();
     }
 }

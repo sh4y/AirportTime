@@ -35,26 +35,44 @@ public class ModifierManager
     /// 2. Applying a delay penalty multiplier.
     /// 3. Adjusting with additional modifiers.
     /// </summary>
-    public double CalculateRevenue(Flight flight)
+    public double CalculateRevenue(Flight flight, int currentTick)
     {
         // Get the base revenue from the Revenue class.
         double baseRevenue = revenueCalculator.CalculateFlightRevenue(flight);
 
         // Apply delay penalty multiplier.
-        double delayMultiplier = GetDelayMultiplier(flight);
+        double delayMultiplier = GetDelayMultiplier(flight, currentTick);
         double revenueAfterDelay = baseRevenue * delayMultiplier;
+
+        // Calculate and log revenue loss from delay
+        if (delayMultiplier < 1.0)
+        {
+            double revenueLoss = baseRevenue - revenueAfterDelay;
+            Console.WriteLine($"Flight {flight.FlightNumber} lost ${revenueLoss:F2} due to {flight.GetDelayTicks(currentTick)} ticks of delay " +
+                            $"(Penalty: {((1.0 - delayMultiplier) * 100):F1}%)");
+        }
 
         // Apply any additional modifiers.
         double finalRevenue = ApplyModifiers(revenueAfterDelay);
         return finalRevenue;
     }
 
-    // Every 1200 ticks of delay reduces revenue by 5%, capped at a 40% reduction.
-    private double GetDelayMultiplier(Flight flight)
+    /// <summary>
+    /// Calculates the delay penalty multiplier.
+    /// Every 'ticksPerPenaltyPeriod' ticks of delay reduces revenue by 'penaltyPerPeriod',
+    /// capped at a maximum total penalty.
+    /// The returned multiplier will be between 1.0 (no penalty) and 0.6 (maximum penalty).
+    /// </summary>
+    private double GetDelayMultiplier(Flight flight, int currentTick)
     {
-        int delayTicks = flight.GetDelayTicks();
-        int penaltyPeriods = delayTicks / 1200;
-        double penalty = Math.Min(penaltyPeriods * 0.05, 0.40);
+        const int ticksPerPenaltyPeriod = 5;  // Every 5 ticks
+        const double penaltyPerPeriod = 0.05; // 5% penalty per period
+        const double maxPenalty = 0.40;       // Maximum 40% penalty
+
+        int delayTicks = flight.GetDelayTicks(currentTick);
+        int periods = delayTicks / ticksPerPenaltyPeriod;
+        double penalty = periods * penaltyPerPeriod;
+        if (penalty > maxPenalty) penalty = maxPenalty;
         return 1.0 - penalty;
     }
 }

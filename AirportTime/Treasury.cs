@@ -166,7 +166,7 @@ public class Treasury
             double newBalance = currentBalance + GoldPerTick;
             balances[CurrencyType.Gold] = newBalance;
 
-            gameLogger.Log($"Accumulated {GoldPerTick} gold. New balance: {newBalance}");
+            //gameLogger.Log($"Accumulated {GoldPerTick} gold. New balance: {newBalance}");
 
             // Also store as a transaction
             var tx = new TreasuryTransaction

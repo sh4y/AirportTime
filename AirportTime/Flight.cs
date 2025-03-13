@@ -12,7 +12,6 @@ public class Flight
     public int Passengers { get; private set; }
 
     // Flight state
-    public bool HasLanded { get; private set; } = false;
     public FlightStatus Status { get; private set; } = FlightStatus.Scheduled;
 
     // Example threshold: If total delay ticks exceed this, cancel automatically
@@ -31,17 +30,22 @@ public class Flight
 
     public bool AttemptLanding(Runway runway)
     {
-        // If canceled, we don't proceed with landing
+        // If canceled or already landed, we don't proceed with landing
         if (Status == FlightStatus.Canceled)
         {
             Console.WriteLine($"Flight {FlightNumber} is canceled and cannot land.");
             return false;
         }
 
+        if (Status == FlightStatus.Landed)
+        {
+            Console.WriteLine($"Flight {FlightNumber} has already landed.");
+            return false;
+        }
+
         if (runway.CanLand(Plane))
         {
             Console.WriteLine($"Flight {FlightNumber} can land.");
-            HasLanded = true;
             Status = FlightStatus.Landed;
             return true;
         }
@@ -59,10 +63,10 @@ public class Flight
     public void Delay(int delayTicks)
     {
         // If already canceled or landed, no further updates
-        if (Status == FlightStatus.Canceled || HasLanded) return;
+        if (Status == FlightStatus.Canceled || Status == FlightStatus.Landed) return;
 
         ScheduledLandingTime += delayTicks;
-        Status = FlightStatus.Delayed;
+        Status = FlightStatus.Delayed;  // Set status to Delayed
 
         // Check if total delay passes the cancellation threshold
         if (GetDelayTicks() > _cancelDelayThreshold)
@@ -85,9 +89,19 @@ public class Flight
     }
 
     // Returns the total number of ticks the flight is delayed.
-    public int GetDelayTicks()
+    public int GetDelayTicks(int currentTick = 0)
     {
-        return ScheduledLandingTime - OriginalScheduledLandingTime;
+        // Get the scheduled delay (from explicit delays)
+        int scheduledDelay = ScheduledLandingTime - OriginalScheduledLandingTime;
+        
+        // If we have a current tick and haven't landed/been canceled, add any additional delay
+        if (currentTick > 0 && Status != FlightStatus.Landed && Status != FlightStatus.Canceled)
+        {
+            int additionalDelay = Math.Max(0, currentTick - ScheduledLandingTime);
+            return scheduledDelay + additionalDelay;
+        }
+
+        return scheduledDelay;
     }
 
     // Returns true if the flight is delayed.
@@ -117,6 +131,6 @@ public class Flight
         return $"Flight {FlightNumber} ({Type}, {Priority}) - " +
                $"Scheduled: {ScheduledLandingTime} (Original: {OriginalScheduledLandingTime}), " +
                $"Passengers: {Passengers}, Delay: {GetDelayTicks()} ticks, " +
-               $"Has Landed: {HasLanded}, Status: {Status}";
+               $"Status: {Status}";
     }
 }
