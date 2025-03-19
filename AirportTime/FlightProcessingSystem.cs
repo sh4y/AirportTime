@@ -8,19 +8,20 @@ public class FlightProcessingSystem
     private readonly Treasury treasury;
     private readonly ModifierManager modifierManager;
     private readonly GameLogger gameLogger;
-
+    private readonly TickManager tickManager;
     public FlightProcessingSystem(
         Queue<Flight> landingQueue,
         RunwayManager runwayManager,
         Treasury treasury,
         ModifierManager modifierManager,
-        GameLogger gameLogger)
+        GameLogger gameLogger, TickManager tickManager)
     {
         this.landingQueue = landingQueue;
         this.runwayManager = runwayManager;
         this.treasury = treasury;
         this.modifierManager = modifierManager;
         this.gameLogger = gameLogger;
+        this.tickManager = tickManager;
     }
 
     /// <summary>
@@ -67,7 +68,7 @@ public class FlightProcessingSystem
             flight.AttemptLanding(selectedRunway);
 
             // Calculate revenue with modifiers
-            double revenue = modifierManager.CalculateRevenue(flight);
+            double revenue = modifierManager.CalculateRevenue(flight, tickManager.CurrentTick);
             treasury.AddFunds(revenue, "Flight Revenue");
 
             gameLogger.Log($"Flight {flight.FlightNumber} landed successfully on {selectedRunway.Name} and generated {revenue:C} in revenue.");

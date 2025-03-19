@@ -6,11 +6,12 @@ public class ModifierManager
 {
     private readonly List<Modifier> modifiers = new();
     private readonly Revenue revenueCalculator;  // Dependency on Revenue
-
+    private readonly GameLogger gameLogger;
     // Pass a Revenue instance into the constructor.
-    public ModifierManager(Revenue revenueCalculator)
+    public ModifierManager(Revenue revenueCalculator, GameLogger gameLogger)
     {
         this.revenueCalculator = revenueCalculator;
+        this.gameLogger = gameLogger;
     }
 
     public void AddModifier(string name, double value)
@@ -48,7 +49,7 @@ public class ModifierManager
         if (delayMultiplier < 1.0)
         {
             double revenueLoss = baseRevenue - revenueAfterDelay;
-            Console.WriteLine($"Flight {flight.FlightNumber} lost ${revenueLoss:F2} due to {flight.GetDelayTicks(currentTick)} ticks of delay " +
+            gameLogger.Log($"Flight {flight.FlightNumber} lost ${revenueLoss:F2} due to {flight.GetDelayTicks(currentTick)} ticks of delay " +
                             $"(Penalty: {((1.0 - delayMultiplier) * 100):F1}%)");
         }
 
@@ -65,7 +66,7 @@ public class ModifierManager
     /// </summary>
     private double GetDelayMultiplier(Flight flight, int currentTick)
     {
-        const int ticksPerPenaltyPeriod = 5;  // Every 5 ticks
+        const int ticksPerPenaltyPeriod = 10;  // Every 5 ticks
         const double penaltyPerPeriod = 0.05; // 5% penalty per period
         const double maxPenalty = 0.40;       // Maximum 40% penalty
 
@@ -73,6 +74,8 @@ public class ModifierManager
         int periods = delayTicks / ticksPerPenaltyPeriod;
         double penalty = periods * penaltyPerPeriod;
         if (penalty > maxPenalty) penalty = maxPenalty;
+        
+        gameLogger.Log($"Delay multiplier for flight {flight.FlightNumber} is {penalty:F2}");
         return 1.0 - penalty;
     }
 }

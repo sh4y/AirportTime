@@ -29,6 +29,6 @@
     public void TriggerDelayEvent(Flight flight, int delayTicks = 5, string reason = "Delay", int currentTick = 0)
     {
         // Create and trigger a FlightDelayEvent with specified delay and reason
-        new FlightDelayEvent(flight, gameLogger, delayTicks, reason, currentTick).Trigger();
+        new FlightDelayEvent(flight, gameLogger, delayTicks, reason).Trigger();
     }
 }

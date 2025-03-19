@@ -22,7 +22,7 @@
         RandomGenerator = new RandomGenerator();
         EventSystem = new EventSystem(RandomGenerator, GameLogger);
         AirportRevenue = new Revenue();
-        ModifierManager = new ModifierManager(AirportRevenue);
+        ModifierManager = new ModifierManager(AirportRevenue, GameLogger);
     }
 
     public void Tick(int currentTick)

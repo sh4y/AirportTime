@@ -10,7 +10,6 @@ public class GameLogger : IDisposable
 {
     private readonly List<string> logEntries;
     private readonly SQLiteLogStore logStore;  // Always used
-
     /// <summary>
     /// Creates a new <see cref="GameLogger"/> that maintains a persistent SQLite connection.
     /// </summary>
