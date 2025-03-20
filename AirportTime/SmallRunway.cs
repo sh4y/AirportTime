@@ -1,9 +1,14 @@
-﻿public class SmallRunway : Runway
+﻿using System;
+
+public class SmallRunway : Runway, IPurchasable
 {
     private const int DefaultLength = 5000; // large runway length
     private const int DefaultTier = 1;         // tier 3 for large runway
+    public int Id { get; set; }
     public string Name { get; }
     public double Price { get; }
+    public ItemType Type => ItemType.Runway;
+    public int ItemTier => (int)CurrentTier;
     public string Description { get; }
     public RunwayTier CurrentTier { get; private set; }
     
@@ -16,8 +21,8 @@
         CurrentTier = RunwayTier.Tier1;
     }
 
-    public void OnPurchase(Airport airport)
+    public override void OnPurchase(Airport airport)
     {
-        airport.RunwayManager.UnlockRunway(RunwayTier.Tier1);
+        airport.RunwayManager.UnlockRunway((Runway)this);
     }
 }

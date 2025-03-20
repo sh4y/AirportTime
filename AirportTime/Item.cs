@@ -2,6 +2,7 @@
 // This class now implements IPurchasable so that items can define additional behavior on purchase.
 public abstract class Item : IPurchasable
 {
+    public int Id {get; private set;}
     public string Name { get; private set; }
     public string Description { get; private set; }
     public double Price { get; private set; }

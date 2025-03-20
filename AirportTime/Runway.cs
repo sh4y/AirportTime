@@ -9,8 +9,12 @@
     public string Description { get; }
     public RunwayTier Tier => (RunwayTier)ItemTier;
 
-    // NOW we keep the runway’s wear state in the runway itself
     public int WearLevel { get; private set; } = 0;
+    
+    public bool IsOccupied { get; private set; } = false;
+    public int OccupiedCountdown { get; private set; } = 0;
+    public int LandingDuration = 5; // Landing process takes 5 ticks
+    public int RepairDuaration = 10; // Repair process takes 10 ticks
 
     public Runway(string name, int length, int tier, double price, string description)
         : base(name, description, price, ItemType.Runway, tier, 1)
@@ -24,7 +28,7 @@
 
     public virtual void OnPurchase(Airport airport)
     {
-        airport.RunwayManager.UnlockRunway(Tier);
+        airport.RunwayManager.UnlockRunway((Runway)this);
         airport.GameLogger.Log($"✅ Purchased and unlocked {Name} (Tier {ItemTier}).");
     }
 
@@ -37,7 +41,7 @@
     }
 
     /// <summary>
-    /// Increment the runway’s WearLevel by the amount specified.
+    /// Increment the runway's WearLevel by the amount specified.
     /// The calculation of <c>totalWear</c> is done by the maintenance system,
     /// but the actual state update is here.
     /// </summary>
@@ -47,10 +51,36 @@
     }
 
     /// <summary>
-    /// Resets wear to zero.
+    /// Resets wear to zero and occupies the runway for 10 ticks.
     /// </summary>
     public void Repair()
     {
         WearLevel = 0;
+        Occupy(RepairDuaration); // Occupy the runway for landing after repair
+    }
+
+    private void Occupy(int duration)
+    {
+        IsOccupied = true;
+        OccupiedCountdown = duration;
+    }
+    
+    // New method to occupy the runway for landing
+    public void OccupyForLanding()
+    {
+        Occupy(LandingDuration);
+    }
+    
+    // New method to update runway status each tick
+    public void UpdateOccupiedStatus()
+    {
+        if (IsOccupied && OccupiedCountdown > 0)
+        {
+            OccupiedCountdown--;
+            if (OccupiedCountdown == 0)
+            {
+                IsOccupied = false;
+            }
+        }
     }
 }

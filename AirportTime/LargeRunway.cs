@@ -17,6 +17,6 @@
 
     public void OnPurchase(Airport airport)
     {
-        airport.RunwayManager.UnlockRunway(RunwayTier.Tier3);
+        airport.RunwayManager.UnlockRunway((Runway)this);
     }
 }

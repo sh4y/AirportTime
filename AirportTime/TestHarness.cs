@@ -35,7 +35,7 @@
             if (treasury.GetBalance() >= 10000)
             {
                 shop.BuyItem("Tier 2 Runway", airport);
-                runwayManager.UnlockRunway(RunwayTier.Tier2);
+                runwayManager.UnlockRunway((Runway)new MediumRunway("", 10000, ""));
                 logger.Log($"[Tick {tick}] Tier 2 Runway unlocked.");
             }
         }));

@@ -4,6 +4,7 @@
 // Plane class to represent planes that will land on the runways
 public interface IPurchasable
 {
+    public int Id {get; }
     public string Name { get; }
     public string Description { get; }
     public double Price { get; }

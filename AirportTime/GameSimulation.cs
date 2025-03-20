@@ -29,14 +29,12 @@ public class GameSimulation
             if (tick == 10)  // For example, buy after 10 ticks
             {
                 shop.BuyItem("Tier 1 Runway");
-                runwayManager.UnlockRunway(RunwayTier.Tier1);
             }
 
             // Try to buy a Tier 2 Runway after enough gold is accumulated
             if (tick == 20 && playerTreasury.GetBalance() >= 10000)
             {
                 shop.BuyItem("Tier 2 Runway");
-                runwayManager.UnlockRunway(RunwayTier.Tier2);
             }
 
             // Display runways info

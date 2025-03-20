@@ -25,8 +25,9 @@ public class RunwayManager
     /// </summary>
     /// <param name="tier">The tier of runway to unlock.</param>
     /// <exception cref="ArgumentException">Thrown when an unknown tier is provided.</exception>
-    public void UnlockRunway(RunwayTier tier)
+    public void UnlockRunway(Runway runway)
     {
+        var tier = runway.Tier;
         // 4. Validate Input: Check if the enum value is valid
         if (!Enum.IsDefined(typeof(RunwayTier), tier))
         {
@@ -39,7 +40,7 @@ public class RunwayManager
         switch (tier)
         {
             case RunwayTier.Tier1:
-                newRunway = new SmallRunway("Small Runway", 1000, "Basic runway suitable for small aircraft");
+                newRunway = (SmallRunway)runway;
                 break;
             default:
                 // If you add more tiers in the future, handle them here.
@@ -76,8 +77,12 @@ public class RunwayManager
         foreach (var runway in runways)
         {
             int wear = maintenanceSystem.GetWearLevel(runway.Name);
+            string occupiedStatus = runway.IsOccupied 
+                ? $"OCCUPIED ({runway.OccupiedCountdown} ticks remaining)" 
+                : "AVAILABLE";
+                
             logger.Log($"[DisplayRunwayInfo] Runway {runway.Name}: " +
-                       $"Length {runway.Length}m, Tier {runway.ItemTier}, Wear {wear}%");
+                      $"Length {runway.Length}m, Tier {runway.ItemTier}, Wear {wear}%, Status: {occupiedStatus}");
         }
     }
 
@@ -98,8 +103,10 @@ public class RunwayManager
         }
 
         // 7. Use LINQ to filter runways
-        return runways.Where(r => r.CanLand(plane) &&
-                                  maintenanceSystem.GetWearLevel(r.Name) < RunwayMaintenanceSystem.FullDegradationThreshold);
+        return runways.Where(r => 
+            r.CanLand(plane) && 
+            !r.IsOccupied &&  // Check if runway is not occupied
+            maintenanceSystem.GetWearLevel(r.Name) < RunwayMaintenanceSystem.FullDegradationThreshold);
     }
 
     /// <summary>
@@ -208,8 +215,21 @@ public class RunwayManager
             return false;
         }
 
+        // Occupy the runway for landing
+        runway.OccupyForLanding();
+        
         maintenanceSystem.ApplyWear(runwayID, weather, trafficVolume);
-        logger.Log($"[HandleLanding] Applied wear to {runwayID}. Current wear: {maintenanceSystem.GetWearLevel(runwayID)}%.");
+        logger.Log($"[HandleLanding] Applied wear to {runwayID}. Current wear: {maintenanceSystem.GetWearLevel(runwayID)}%. " +
+                   $"Runway will be occupied for 10 ticks.");
         return true;
+    }
+    
+    // Add this method to update all runways on each tick
+    public void UpdateRunwaysStatus()
+    {
+        foreach (var runway in runways)
+        {
+            runway.UpdateOccupiedStatus();
+        }
     }
 }

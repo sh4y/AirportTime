@@ -29,6 +29,9 @@
     {
         // Accumulate gold at every tick
         Treasury.AccumulateGold();
+        
+        // Update runway occupation status
+        RunwayManager.UpdateRunwaysStatus();
 
         // Process scheduled flights for the current tick
         ProcessScheduledFlights(currentTick);

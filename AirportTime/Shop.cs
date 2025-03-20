@@ -8,6 +8,7 @@ public class Shop
     private readonly List<IPurchasable> itemsForSale;
     private readonly Treasury treasury;
     private readonly GameLogger logger;
+    private int nextItemId = 1; // Auto-incrementing ID
 
     public Shop(Treasury treasury, GameLogger logger)
     {
@@ -21,8 +22,8 @@ public class Shop
     private void InitializeItems()
     {
         // Use the RunwayTier enum for clarity.
-// When setting up the shop in your airport initialization:
-        itemsForSale.Add(new SmallRunway("Small Runway", 100, "Basic runway suitable for small aircraft"));
+        itemsForSale.Add(new SmallRunway("Small Runway", 100, "Basic runway suitable for small aircraft") { Id = nextItemId++ });
+        itemsForSale.Add(new SmallRunway("Small Runway2", 100, "Basic runway suitable for small aircraft") { Id = nextItemId++ });
     }
 
     public void ViewItemsForSale()
@@ -30,13 +31,13 @@ public class Shop
         logger.Log("Items for Sale:");
         foreach (var item in itemsForSale)
         {
-            logger.Log($"{item.Name} (Tier {item.ItemTier}) - {item.Description} - Price: {item.Price:C}");
+            logger.Log($"ID: {item.Id} - {item.Name} (Tier {item.ItemTier}) - {item.Description} - Price: {item.Price:C}");
         }
     }
 
-    public PurchaseResult BuyItem(string itemName, Airport airport = null)
+    public PurchaseResult BuyItem(int itemId, Airport airport = null)
     {
-        var item = itemsForSale.FirstOrDefault(i => i.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase));
+        var item = itemsForSale.FirstOrDefault(i => i.Id == itemId);
         if (item == null)
         {
             logger.Log("Item not found in the shop.");
@@ -65,6 +66,25 @@ public class Shop
         if (treasury.GetBalance() < item.Price)
         {
             logger.Log("Not enough gold to purchase this runway item.");
+            return PurchaseResult.NotEnoughGold;
+        }
+        treasury.DeductFunds(item.Price, $"Purchased {item.Name}");
+        logger.Log($"You have purchased: {item.Name}");
+        item.OnPurchase(airport);
+        return PurchaseResult.Success;
+    }
+
+    public PurchaseResult BuyItem(string itemName, Airport airport = null)
+    {
+        var item = itemsForSale.FirstOrDefault(i => i.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase));
+        if (item == null)
+        {
+            logger.Log("Item not found in the shop.");
+            return PurchaseResult.ItemNotFound;
+        }
+        if (treasury.GetBalance() < item.Price)
+        {
+            logger.Log("Not enough gold to purchase this item.");
             return PurchaseResult.NotEnoughGold;
         }
         treasury.DeductFunds(item.Price, $"Purchased {item.Name}");

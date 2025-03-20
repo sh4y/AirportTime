@@ -47,19 +47,33 @@ public class InputHandler
     {
         tickManager.Pause();
         airport.Shop.ViewItemsForSale();
-        Console.WriteLine("Enter item name to purchase:");
-        var itemName = Console.ReadLine();
+        Console.WriteLine("Enter item ID or name to purchase:");
+        var input = Console.ReadLine();
 
-        if (airport.Shop.BuyItem(itemName, airport) == PurchaseResult.Success)
+        // Try to parse the input as an integer
+        if (int.TryParse(input, out int itemId))
         {
-            if (itemName.Contains("Runway"))
-                airport.RunwayManager.UnlockRunway(RunwayTier.Tier1);
-
-            logger.Log($"✅ Purchased {itemName}.");
+            // Attempt to buy the item by ID
+            if (airport.Shop.BuyItem(itemId, airport) == PurchaseResult.Success)
+            {
+                logger.Log($"✅ Purchased item with ID {itemId}.");
+            }
+            else
+            {
+                logger.Log($"❌ Could not purchase item with ID {itemId}. Insufficient funds or invalid item.");
+            }
         }
         else
         {
-            logger.Log($"❌ Could not purchase {itemName}. Insufficient funds or invalid item.");
+            // Attempt to buy the item by name
+            if (airport.Shop.BuyItem(input, airport) == PurchaseResult.Success)
+            {
+                logger.Log($"✅ Purchased {input}.");
+            }
+            else
+            {
+                logger.Log($"❌ Could not purchase {input}. Insufficient funds or invalid item.");
+            }
         }
 
         tickManager.Start();
