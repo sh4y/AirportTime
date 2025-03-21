@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 // This allows the game logic to react appropriately to each outcome.
@@ -22,8 +23,8 @@ public class Shop
     private void InitializeItems()
     {
         // Use the RunwayTier enum for clarity.
-        itemsForSale.Add(new SmallRunway("Small Runway", 100, "Basic runway suitable for small aircraft") { Id = nextItemId++ });
-        itemsForSale.Add(new SmallRunway("Small Runway2", 15000, "Basic runway suitable for small aircraft") { Id = nextItemId++ });
+        AddItemToShop(new SmallRunway("Small Runway", 100, "Basic runway suitable for small aircraft") {Id = nextItemId++});
+        AddItemToShop(new SmallRunway("Small Runway2", 15000, "Basic runway suitable for small aircraft") {Id = nextItemId++});
         
         // Additional items will be added through level progression
     }
@@ -39,15 +40,12 @@ public class Shop
             logger.Log($"Item '{item.Name}' already exists in the shop.");
             return;
         }
-    
         // We can't set the Id directly, so we'd need to create a new item if needed
         // This depends on what type of item we're adding and how the constructors are defined
     
         // Add the item to the shop
         itemsForSale.Add(item);
         logger.Log($"New item added to shop: {item.Name} - {item.Description} - Price: {item.Price:C}");
-    
-        // Increment ID counter for next item
         nextItemId++;
     }
 

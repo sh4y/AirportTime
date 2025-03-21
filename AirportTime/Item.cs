@@ -53,7 +53,7 @@ public abstract class Item : IPurchasable
     /// Default OnPurchase behavior: logs the purchase, reduces the availability, and logs if the item is sold out.
     /// </summary>
     /// <param name="airport">The airport context used for logging.</param>
-    public void OnPurchase(Airport airport)
+    public virtual void OnPurchase(Airport airport)
     {
         airport.GameLogger.Log($"✅ Purchased {Name} for {Price:C}.");
 

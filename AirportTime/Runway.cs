@@ -13,7 +13,7 @@
     
     public bool IsOccupied { get; private set; } = false;
     public int OccupiedCountdown { get; private set; } = 0;
-    public int LandingDuration = 5; // Landing process takes 5 ticks
+    public int LandingDuration = 10; // Landing process takes 5 ticks
     public int RepairDuaration = 10; // Repair process takes 10 ticks
 
     public Runway(string name, int length, int tier, double price, string description)
@@ -26,7 +26,7 @@
         Description = description;
     }
 
-    public virtual void OnPurchase(Airport airport)
+    public override void OnPurchase(Airport airport)
     {
         airport.RunwayManager.UnlockRunway((Runway)this);
         airport.GameLogger.Log($"✅ Purchased and unlocked {Name} (Tier {ItemTier}).");
@@ -94,5 +94,21 @@
                 Console.WriteLine($"Runway {Name} is now free.");
             }
         }
+    }
+    /// <summary>
+    /// Reduces the landing duration time by the specified percentage.
+    /// The minimum landing duration is 1 tick.
+    /// </summary>
+    /// <param name="reductionFactor">Percentage to reduce duration by (0.0 to 1.0)</param>
+    public void ReduceLandingDuration(double reductionFactor)
+    {
+        // Ensure the reduction factor is within valid range
+        reductionFactor = Math.Clamp(reductionFactor, 0.0, 1.0);
+    
+        // Calculate the new duration with a minimum of 1 tick
+        int originalDuration = LandingDuration;
+        LandingDuration = Math.Max(1, (int)(LandingDuration * (reductionFactor)));
+    
+        Console.WriteLine($"Runway {Name} landing duration reduced from {originalDuration} to {LandingDuration} ticks.");
     }
 }

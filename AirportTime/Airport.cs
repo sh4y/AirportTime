@@ -12,7 +12,8 @@
     public ExperienceSystem ExperienceSystem { get; private set; }
     private Revenue AirportRevenue { get; set; }
     private readonly IRandomGenerator RandomGenerator;
-    
+    private EventScheduler flightEventScheduler = new EventScheduler();
+
     // Track active flights for XP calculation
     private readonly List<Flight> activeFlights = new List<Flight>();
 
@@ -88,29 +89,6 @@
         }
     }
     
-    private void GenerateFlightsIfNeeded(int currentTick)
-    {
-        // Get our current airport level
-        int airportLevel = ExperienceSystem.CurrentLevel;
-        
-        // Create a flight generator if we don't have one yet
-        FlightGenerator flightGenerator = new FlightGenerator(RandomGenerator);
-        
-        // Check if we should generate new flights based on level and tick
-        if (flightGenerator.ShouldGenerateFlights(currentTick, airportLevel))
-        {
-            // Generate a batch of flights appropriate for our level
-            var newFlights = flightGenerator.GenerateFlightBatch(currentTick, airportLevel);
-            
-            // Schedule each flight
-            foreach (var flight in newFlights)
-            {
-                FlightScheduler.ScheduleFlight(flight, flight.ScheduledLandingTime);
-                GameLogger.Log($"Scheduled {flight.FlightNumber} ({flight.Type}, {flight.Priority}) with {flight.Passengers} passengers for tick {flight.ScheduledLandingTime}");
-            }
-        }
-    }
-    
     private void UpdateActiveFlights()
     {
         // Update our list of active flights (for XP calculations)
@@ -166,19 +144,20 @@
         switch (level)
         {
             case 2:
-                Shop.AddItemToShop(new MediumRunway("Medium Runway", 5000, "Capable of handling medium aircraft"));
+                Shop.AddItemToShop(new MediumRunway("Medium Runway", 100000, "Capable of handling medium aircraft"));
                 GameLogger.Log("New shop item unlocked: Medium Runway");
                 break;
-                
             case 3:
-                Shop.AddItemToShop(new LargeRunway("Large Runway", 12000, "Capable of handling large aircraft"));
-                GameLogger.Log("New shop item unlocked: Large Runway");
-                break;
-                
-            case 5:
                 // Add a revenue modifier for higher airport reputation
                 ModifierManager.AddModifier("High Airport Reputation", 1.25);
+                var item = new RunwayBuff("Runway Speed Upgrade", "Increases runway speed by 10%", 50000,
+                    BuffType.LandingDurationReduction, 0.9);
+                Shop.AddItemToShop(item);
                 GameLogger.Log("Reputation Bonus: All flights now generate 25% more revenue!");
+                break;
+            case 5:
+                Shop.AddItemToShop(new LargeRunway("Large Runway", 5000000, "Capable of handling large aircraft"));
+                GameLogger.Log("New shop item unlocked: Large Runway");
                 break;
                 
             case 7:
@@ -215,4 +194,46 @@
         // Random events are triggered every 60 ticks (i.e., once per minute)
         return currentTick % 60 == 0;
     }
+    
+private void GenerateFlightsIfNeeded(int currentTick)
+{
+    // Process any scheduled flight generation events
+    flightEventScheduler.ProcessEvents(currentTick);
+
+    // Only generate new batches every 12 ticks (approximately 10 seconds at 0.8s per tick)
+    if (currentTick % 12 == 0)
+    {
+        // Get our current airport level
+        int airportLevel = ExperienceSystem.CurrentLevel;
+        
+        // Create a flight generator
+        FlightGenerator flightGenerator = new FlightGenerator(RandomGenerator);
+        
+        // Calculate number of flights based on runway count (1.5 * runwayCount)
+        int runwayCount = RunwayManager.GetRunwayCount();
+        int flightsToGenerate = (int)Math.Ceiling(runwayCount * 2.5);
+        flightsToGenerate = Math.Max(1, flightsToGenerate); // Ensure at least 1 flight
+        
+        GameLogger.Log($"Generating {flightsToGenerate} flights (2.5 × {runwayCount} runways)");
+        
+        // Stagger the flights over the next several ticks
+        for (int i = 0; i < flightsToGenerate; i++)
+        {
+            // Calculate stagger interval (rounded up)
+            int staggerInterval = (int)Math.Ceiling(12.0 / Math.Max(1, flightsToGenerate));
+            int staggerTicks = i * staggerInterval;
+            int scheduledTick = currentTick + staggerTicks;
+            
+            // Schedule the flight generation event
+            flightEventScheduler.ScheduleEvent(new ScheduledEvent(scheduledTick, (tick) => {
+                // Generate a single flight
+                Flight flight = flightGenerator.GenerateRandomFlight(tick, airportLevel);
+                
+                // Schedule the flight
+                FlightScheduler.ScheduleFlight(flight, flight.ScheduledLandingTime);
+                GameLogger.Log($"Scheduled {flight.FlightNumber} ({flight.Type}, {flight.Priority}) with {flight.Passengers} passengers for tick {flight.ScheduledLandingTime}");
+            }));
+        }
+    }
+}
 }

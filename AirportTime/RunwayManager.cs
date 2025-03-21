@@ -29,6 +29,14 @@ public class RunwayManager
     }
     
     /// <summary>
+    /// Returns the total number of runways currently available
+    /// </summary>
+    public int GetRunwayCount()
+    {
+        return runways.Count;
+    }
+    
+    /// <summary>
     /// Adds weather resistance to runways (0.0 to 1.0, where 1.0 means complete protection)
     /// </summary>
     public void AddWeatherResistance(double resistance)
@@ -48,7 +56,25 @@ public class RunwayManager
         
         weatherResistance = newResistance;
     }
-
+    /// <summary>
+    /// Reduces landing duration for all runways by the specified percentage
+    /// </summary>
+    /// <param name="reductionFactor">Percentage to reduce duration by (0.0 to 1.0)</param>
+    public void ReduceAllRunwayLandingDurations(double reductionFactor)
+    {
+        if (runways.Count == 0)
+        {
+            logger.Log("[ReduceAllRunwayLandingDurations] No runways available to modify.");
+            return;
+        }
+    
+        foreach (var runway in runways)
+        {
+            runway.ReduceLandingDuration(reductionFactor);
+        }
+    
+        logger.Log($"[ReduceAllRunwayLandingDurations] Reduced landing duration by {reductionFactor:P0} for all runways.");
+    }
     /// <summary>
     /// Unlocks a <see cref="Runway"/> given a specific <see cref="RunwayTier"/>.
     /// Registers it with the <see cref="RunwayMaintenanceSystem"/> and logs the result.

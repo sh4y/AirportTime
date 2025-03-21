@@ -52,7 +52,7 @@ public class GameLogger : IDisposable
             Console.WriteLine(log);
         }
     }
-
+    
     /// <summary>
     /// Displays the most recent logs from in-memory storage (does not query the database).
     /// </summary>
@@ -60,10 +60,21 @@ public class GameLogger : IDisposable
     public void DisplayRecentLogs(int count)
     {
         int startIndex = logEntries.Count > count ? logEntries.Count - count : 0;
-        Console.WriteLine("Recent Logs:");
         for (int i = startIndex; i < logEntries.Count; i++)
         {
-            Console.WriteLine(logEntries[i]);
+            // Format logs to fit in the UI box (max 85 characters)
+            string log = logEntries[i];
+            if (log.Length > 85)
+            {
+                log = log.Substring(0, 82) + "...";
+            }
+            Console.WriteLine($"│  {log,-85} │");
+        }
+        
+        // Fill empty log lines to maintain consistent UI height
+        for (int i = 0; i < count - (logEntries.Count - startIndex); i++)
+        {
+            Console.WriteLine("│                                                                                          │");
         }
     }
 
