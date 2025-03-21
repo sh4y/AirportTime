@@ -22,27 +22,22 @@
 
     // Apply wear based on traffic and weather conditions
     // But the actual increment logic is offloaded to the runway’s own method
-    public void ApplyWear(string runwayID, Weather weather, int trafficVolume=0)
+    public void ApplyWear(string runwayID, Weather weather, int trafficVolume=0, double weatherResistanceFactor=0.0)
     {
         if (registeredRunways.TryGetValue(runwayID, out var runway))
         {
-            // Calculate how much wear we *want* to apply
+            // Calculate base wear
             int wearIncrease = WearIncrementPerLanding + new Random().Next(1,7) + (trafficVolume / 10);
-            int weatherImpact = weather.GetWeatherImpact() * WeatherImpactMultiplier;
-            int totalWear = wearIncrease + weatherImpact;
+        
+            // Calculate weather impact with resistance
+            int weatherImpact = weather.GetWeatherImpact();
+            int resistantWeatherImpact = (int)(weatherImpact * (1.0 - weatherResistanceFactor));
+        
+            // Calculate total wear
+            int totalWear = wearIncrease + resistantWeatherImpact * WeatherImpactMultiplier;
 
-            // Delegate the actual update to the runway so it manages its own state
+            // Apply the wear
             runway.ApplyWear(totalWear);
-
-            // Optional: Issue global warnings or logs from the system perspective
-            if (runway.WearLevel >= CriticalWearThreshold && runway.WearLevel < FullDegradationThreshold)
-            {
-                Console.WriteLine($"⚠️ Warning: Runway {runway.Name} is at {runway.WearLevel}% wear and needs maintenance soon!");
-            }
-            else if (runway.WearLevel >= FullDegradationThreshold)
-            {
-                Console.WriteLine($"❌ Runway {runway.Name} is fully degraded and is now CLOSED for use.");
-            }
         }
     }
     

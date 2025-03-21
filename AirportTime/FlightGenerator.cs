@@ -1,46 +1,129 @@
 ﻿public class FlightGenerator
 {
     private readonly IRandomGenerator randomGenerator;
-
+    private readonly FlightSpawnProfile spawnProfile;
+    private int flightNumberCounter = 100;
+    
     public FlightGenerator(IRandomGenerator randomGenerator)
     {
         this.randomGenerator = randomGenerator;
+        this.spawnProfile = new FlightSpawnProfile(randomGenerator);
     }
-
-    public Flight GenerateRandomFlight(int tick, int passengerCount)
+    
+    /// <summary>
+    /// Generates a flight with random properties based on the airport level
+    /// </summary>
+    public Flight GenerateRandomFlight(int tick, int airportLevel)
     {
-        // Generate a flight number between 100 and 999 (using 1000 as the exclusive upper bound)
-        string flightNumber = "AA" + randomGenerator.Next(100, 1000);
-
-        // Randomize between small, medium, and large planes (0, 1, or 2)
-        PlaneSize planeSize = (PlaneSize)randomGenerator.Next(0,0);
-
-        // Generate a random weight for the plane between 10,000 and 80,000
-        Plane plane = new Plane(flightNumber, planeSize, randomGenerator.Next(10000, 80000));
-
-        // Randomly choose a flight type (0 to 3)
-        FlightType flightType = (FlightType)randomGenerator.Next(0, 4);
-
-        // Randomly choose a flight priority (0 to 2)
-        FlightPriority flightPriority = (FlightPriority)randomGenerator.Next(0, 3);
-
-        // Determine the scheduled landing time: current tick plus a random offset between 5 and 15 ticks
-        int scheduledLandingTime = tick + randomGenerator.Next(5, 15);
-
-        // Create and return the flight with random details
+        // Get flight properties based on probability distributions
+        PlaneSize planeSize = spawnProfile.GetRandomPlaneSize(airportLevel);
+        FlightType flightType = spawnProfile.GetRandomFlightType(airportLevel);
+        FlightPriority flightPriority = spawnProfile.GetRandomFlightPriority(airportLevel);
+        
+        // Get the passenger count based on plane size and airport level
+        int passengerCount = spawnProfile.GetPassengerCount(planeSize, airportLevel);
+        
+        // Generate a unique flight number with airline code
+        string airlineCode = GenerateAirlineCode(flightType);
+        string flightNumber = $"{airlineCode}{flightNumberCounter++}";
+        
+        // Generate a random weight for the plane based on size
+        double planeWeight = GeneratePlaneWeight(planeSize);
+        
+        // Create a plane with the generated properties
+        Plane plane = new Plane(flightNumber, planeSize, planeWeight);
+        
+        // Determine the scheduled landing time: current tick plus a random offset
+        int scheduledLandingTime = CalculateScheduledLandingTime(tick, airportLevel);
+        
+        // Create and return the flight with the generated properties
         return new Flight(flightNumber, plane, flightType, flightPriority, scheduledLandingTime, passengerCount);
     }
-
-    // Generate multiple flights at the given tick
-    public List<Flight> GenerateMultipleFlights(int tick, int count)
+    
+    /// <summary>
+    /// Generate multiple flights at the given tick based on the airport level
+    /// </summary>
+    public List<Flight> GenerateFlightBatch(int tick, int airportLevel)
     {
+        // Determine how many flights to generate based on airport level
+        int batchSize = spawnProfile.GetFlightBatchSize(airportLevel);
+        
         var flights = new List<Flight>();
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < batchSize; i++)
         {
-            // Generate a random number of passengers between 50 and 300
-            int passengerCount = randomGenerator.Next(50, 300);
-            flights.Add(GenerateRandomFlight(tick, passengerCount));
+            flights.Add(GenerateRandomFlight(tick, airportLevel));
         }
+        
         return flights;
     }
+    
+    /// <summary>
+    /// Determines if a new flight batch should be generated based on airport level
+    /// </summary>
+    public bool ShouldGenerateFlights(int tick, int airportLevel)
+    {
+        // Get the generation frequency (ticks between flights)
+        int frequency = spawnProfile.GetFlightGenerationFrequency(airportLevel);
+        
+        // Generate flights at intervals based on frequency
+        return tick % frequency == 0;
+    }
+    
+    #region Helper Methods
+    
+    private string GenerateAirlineCode(FlightType flightType)
+    {
+        // Different airline codes based on flight type
+        string[] commercialAirlines = { "AA", "DL", "UA", "BA", "LH", "QF", "SQ" };
+        string[] cargoAirlines = { "FX", "UPS", "DHL", "CAL" };
+        string[] vipAirlines = { "PJ", "XO", "VP" };
+        string[] emergencyAirlines = { "MED", "RES", "EMG" };
+        
+        // Select an airline code based on flight type
+        string[] airlineCodes = flightType switch
+        {
+            FlightType.Commercial => commercialAirlines,
+            FlightType.Cargo => cargoAirlines,
+            FlightType.VIP => vipAirlines,
+            FlightType.Emergency => emergencyAirlines,
+            _ => commercialAirlines
+        };
+        
+        // Randomly select an airline code from the appropriate array
+        return airlineCodes[randomGenerator.Next(0, airlineCodes.Length)];
+    }
+    
+    private double GeneratePlaneWeight(PlaneSize planeSize)
+    {
+        // Generate weight ranges based on plane size
+        return planeSize switch
+        {
+            PlaneSize.Small => randomGenerator.Next(10000, 30000),
+            PlaneSize.Medium => randomGenerator.Next(30000, 60000),
+            PlaneSize.Large => randomGenerator.Next(60000, 100000),
+            _ => randomGenerator.Next(10000, 30000)
+        };
+    }
+    
+    private int CalculateScheduledLandingTime(int currentTick, int airportLevel)
+    {
+        // Base offset range
+        int minOffset = 5;
+        int maxOffset = 15;
+        
+        // Adjust offset range based on airport level (higher levels get more compressed schedules)
+        int adjustedMinOffset = Math.Max(3, minOffset - (airportLevel / 3));
+        int adjustedMaxOffset = Math.Max(8, maxOffset - (airportLevel / 4));
+        
+        // Ensure min is less than max
+        if (adjustedMinOffset >= adjustedMaxOffset)
+        {
+            adjustedMaxOffset = adjustedMinOffset + 1;
+        }
+        
+        // Calculate scheduled time
+        return currentTick + randomGenerator.Next(adjustedMinOffset, adjustedMaxOffset);
+    }
+    
+    #endregion
 }

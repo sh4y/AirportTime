@@ -5,7 +5,7 @@
 public class Treasury
 {
     // 1) Factor out magic numbers
-    private const double DefaultStartingBalance = 1000.0;
+    private const double DefaultStartingBalance = 90.0;
     private const double DefaultGoldPerTick = 3.0;
 
     // Instead of a single "balance" field, we keep a dictionary for future multi-currency

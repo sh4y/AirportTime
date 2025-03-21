@@ -67,6 +67,7 @@ public abstract class Item : IPurchasable
         string availabilityStatus = IsSoldOut() ? "Sold Out" : Availability.ToString();
         return $"{Name} (Tier {ItemTier}) - {Description} - Price: {Price:C} - Available: {availabilityStatus}";
     }
+    
 
 
 }

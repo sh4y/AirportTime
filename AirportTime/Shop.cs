@@ -23,7 +23,32 @@ public class Shop
     {
         // Use the RunwayTier enum for clarity.
         itemsForSale.Add(new SmallRunway("Small Runway", 100, "Basic runway suitable for small aircraft") { Id = nextItemId++ });
-        itemsForSale.Add(new SmallRunway("Small Runway2", 100, "Basic runway suitable for small aircraft") { Id = nextItemId++ });
+        itemsForSale.Add(new SmallRunway("Small Runway2", 15000, "Basic runway suitable for small aircraft") { Id = nextItemId++ });
+        
+        // Additional items will be added through level progression
+    }
+
+    /// <summary>
+    /// Adds a new item to the shop (unlocked through level progression)
+    /// </summary>
+    public void AddItemToShop(IPurchasable item)
+    {
+        // Check if we already have an item with this name
+        if (itemsForSale.Any(i => i.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase)))
+        {
+            logger.Log($"Item '{item.Name}' already exists in the shop.");
+            return;
+        }
+    
+        // We can't set the Id directly, so we'd need to create a new item if needed
+        // This depends on what type of item we're adding and how the constructors are defined
+    
+        // Add the item to the shop
+        itemsForSale.Add(item);
+        logger.Log($"New item added to shop: {item.Name} - {item.Description} - Price: {item.Price:C}");
+    
+        // Increment ID counter for next item
+        nextItemId++;
     }
 
     public void ViewItemsForSale()
