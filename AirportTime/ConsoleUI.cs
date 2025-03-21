@@ -1,8 +1,4 @@
-﻿
-// Game simulation class to simulate the purchase of items and running the airport
-// Flight class to represent flights and handle landing procedure
-// Plane class to represent planes that will land on the runways
-public static class ConsoleUI
+﻿public static class ConsoleUI
 {
     public static void DisplayStatus(Airport airport, int currentTick)
     {
@@ -11,6 +7,7 @@ public static class ConsoleUI
         Console.WriteLine($"Airport: {airport.Name}");
         Console.WriteLine($"Tick: {currentTick}");
         Console.WriteLine($"Gold: {airport.Treasury.GetBalance():C}");
+        Console.WriteLine($"Landing Mode: {airport.LandingManager.CurrentLandingMode}");
 
         Console.WriteLine("\n--- Runways ---");
         airport.RunwayManager.DisplayRunwayInfo();
@@ -32,5 +29,7 @@ public static class ConsoleUI
         Console.WriteLine("\n--- Log ---");
         airport.GameLogger.DisplayRecentLogs(5); // Assumes GameLogger has this method
         
+        Console.WriteLine("\n--- Controls ---");
+        Console.WriteLine("Q:Pause  F:New Flight  S:Shop  R:Repair  M:Toggle Mode  H:Help");
     }
 }

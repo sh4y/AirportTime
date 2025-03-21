@@ -40,6 +40,20 @@ public class InputHandler
             case ConsoleKey.R:
                 RepairRunways();
                 break;
+                
+            case ConsoleKey.M:
+                // Toggle between automatic and manual landing modes
+                airport.ToggleLandingMode();
+                FlightLandingManager.LandingMode currentMode = airport.LandingManager.CurrentLandingMode;
+                logger.Log($"🔄 Landing mode switched to {currentMode} mode.");
+                
+                // Show mode status on screen
+                Console.WriteLine($"\n>>> Landing mode is now: {currentMode} <<<");
+                break;
+
+            case ConsoleKey.H:
+                DisplayHelp();
+                break;
         }
     }
 
@@ -84,6 +98,25 @@ public class InputHandler
         logger.Log($"🛠️ Manual runway maintenance initiated by user.");
         airport.RunwayManager.PerformMaintenance(airport.Treasury);
     }
+    
+    private void DisplayHelp()
+    {
+        tickManager.Pause();
+        
+        Console.Clear();
+        Console.WriteLine("=== AIRPORT TIME HELP ===");
+        Console.WriteLine("Q - Pause/Unpause Game");
+        Console.WriteLine("F - Generate Random Flight");
+        Console.WriteLine("S - Open Shop");
+        Console.WriteLine("R - Repair All Runways");
+        Console.WriteLine("M - Toggle Landing Mode (Automatic/Manual)");
+        Console.WriteLine("H - Show This Help Screen");
+        Console.WriteLine("\nManual Landing Mode:");
+        Console.WriteLine("  When a flight is ready to land, you'll be prompted to choose a runway.");
+        Console.WriteLine("  You have 15 seconds to make a selection or the system will auto-select.");
+        Console.WriteLine("\nPress any key to return to the game...");
+        
+        Console.ReadKey(true);
+        tickManager.Start();
+    }
 }
-
-

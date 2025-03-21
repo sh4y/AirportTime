@@ -43,6 +43,7 @@ namespace AirportTime
             var logger = serviceProvider.GetRequiredService<GameLogger>();
             var weather = serviceProvider.GetRequiredService<Weather>();
             var flightGen = serviceProvider.GetRequiredService<FlightGenerator>();
+            airport.SetLandingManager(tickManager);
 
             tickManager.OnTick += (currentTick) =>
             {

@@ -65,21 +65,33 @@
         OccupiedCountdown = duration;
     }
     
-    // New method to occupy the runway for landing
+// Add this method to the Runway class to ensure proper occupation handling
+
+    /// <summary>
+    /// Occupies the runway specifically for a landing operation.
+    /// </summary>
     public void OccupyForLanding()
     {
-        Occupy(LandingDuration);
-    }
+        // Mark the runway as occupied for the landing duration
+        IsOccupied = true;
+        OccupiedCountdown = LandingDuration;
     
-    // New method to update runway status each tick
+        Console.WriteLine($"Runway {Name} is now occupied for landing. Will be free in {OccupiedCountdown} ticks.");
+    }
+
+    /// <summary>
+    /// Updates the runway's occupied status each tick.
+    /// </summary>
     public void UpdateOccupiedStatus()
     {
         if (IsOccupied && OccupiedCountdown > 0)
         {
             OccupiedCountdown--;
+        
             if (OccupiedCountdown == 0)
             {
                 IsOccupied = false;
+                Console.WriteLine($"Runway {Name} is now free.");
             }
         }
     }

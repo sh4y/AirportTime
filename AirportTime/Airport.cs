@@ -8,6 +8,7 @@
     public EventSystem EventSystem { get; private set; }
     public GameLogger GameLogger { get; private set; }
     public ModifierManager ModifierManager { get; private set; }
+    public FlightLandingManager LandingManager { get; private set; }
     private Revenue AirportRevenue { get; set; }
     private readonly IRandomGenerator RandomGenerator;
 
@@ -23,6 +24,7 @@
         EventSystem = new EventSystem(RandomGenerator, GameLogger);
         AirportRevenue = new Revenue();
         ModifierManager = new ModifierManager(AirportRevenue, GameLogger);
+        LandingManager = null;
     }
 
     public void Tick(int currentTick)
@@ -49,43 +51,29 @@
         // Process all flights
         foreach (var flight in scheduledFlights.Concat(delayedFlights))
         {
-            ProcessFlight(flight, currentTick);
+            LandingManager.ProcessFlight(flight, currentTick);
         }
     }
 
-    private void ProcessFlight(Flight flight, int currentTick)
+    public void ToggleLandingMode()
     {
-        // Calculate how many ticks past schedule we are
-        int ticksPastSchedule = currentTick - flight.ScheduledLandingTime;
-        if (ticksPastSchedule > 0)
-        {
-            // Flight is past its scheduled time, add delay
-            GameLogger.Log($"Flight {flight.FlightNumber} is {ticksPastSchedule} ticks past scheduled landing time.");
-            EventSystem.TriggerDelayEvent(flight, ticksPastSchedule, "Past scheduled landing time", currentTick);
-            // Don't return - continue trying to land
-        }
-
-        if (RunwayManager.CanLand(flight.Plane))
-        {
-            var availableRunway = RunwayManager.GetAvailableRunway(flight.Plane);
-            if (!flight.AttemptLanding(availableRunway))
-            {
-                GameLogger.Log($"Flight {flight.FlightNumber} failed landing.");
-                EventSystem.TriggerDelayEvent(flight, 5, "Failed landing attempt", currentTick);
-                return;
-            }
-            RunwayManager.HandleLanding(availableRunway.Name, new Weather(RandomGenerator), 10);
-            double revenue = ModifierManager.CalculateRevenue(flight, currentTick);
-            Treasury.AddFunds(revenue, "Flight Revenue");
-            GameLogger.Log($"Flight {flight.FlightNumber} landed successfully.");
-        }
-        else
-        {
-            GameLogger.Log($"Flight {flight.FlightNumber} delayed — no available runway.");
-            EventSystem.TriggerDelayEvent(flight, 5, "No available runway", currentTick);
-        }
+        LandingManager.ToggleLandingMode();
     }
 
+    // Method to set the LandingManager after TickManager is available
+    public void SetLandingManager(TickManager tickManager)
+    {
+        LandingManager = new FlightLandingManager(
+            RunwayManager,
+            Treasury,
+            ModifierManager,
+            GameLogger,
+            EventSystem,
+            RandomGenerator,
+            tickManager
+        );
+    }
+    
     private bool IsRandomEventTick(int currentTick)
     {
         // Random events are triggered every 60 ticks (i.e., once per minute)
