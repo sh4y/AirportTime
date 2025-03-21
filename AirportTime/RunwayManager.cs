@@ -287,7 +287,15 @@ public class RunwayManager
             }
         }
     }
-    
+    /// <summary>
+    /// Gets a runway by its name
+    /// </summary>
+    /// <param name="runwayName">The name of the runway to retrieve</param>
+    /// <returns>The runway object or null if not found</returns>
+    public Runway GetRunwayByName(string runwayName)
+    {
+        return runways.FirstOrDefault(r => r.Name.Equals(runwayName, StringComparison.OrdinalIgnoreCase));
+    }
     /// <summary>
     /// Performs maintenance on all runways
     /// </summary>
@@ -318,4 +326,57 @@ public class RunwayManager
             }
         }
     }
+    /// <summary>
+
+/// <summary>
+/// Handles landing on a runway, applying weather-resistant wear
+/// </summary>
+public bool HandleLanding(string runwayID, Weather weather, int trafficVolume, string flightNumber = null)
+{
+    // Find the runway
+    var runway = runways.FirstOrDefault(r => r.Name.Equals(runwayID));
+    if (runway == null)
+    {
+        logger.Log($"[HandleLanding] Runway {runwayID} not found. Landing aborted.");
+        return false;
+    }
+
+    // Check if runway is already occupied
+    if (runway.IsOccupied)
+    {
+        logger.Log($"[HandleLanding] Runway {runwayID} is currently occupied. Landing aborted.");
+        return false;
+    }
+
+    // Occupy the runway for landing
+    if (!string.IsNullOrEmpty(flightNumber))
+        runway.OccupyForLanding(flightNumber);
+    else
+        runway.OccupyForLanding();
+    
+    // Apply wear with weather resistance applied to the weather impact
+    if (weatherResistance > 0.0)
+    {
+        // Calculate reduced weather impact
+        int originalImpact = weather.GetWeatherImpact();
+        int reducedImpact = (int)(originalImpact * (1.0 - weatherResistance));
+    
+        // Create a custom traffic volume that includes the reduced weather impact
+        int adjustedTrafficVolume = trafficVolume - (originalImpact - reducedImpact);
+    
+        logger.Log($"[HandleLanding] Weather resistance reduced impact from {originalImpact} to {reducedImpact}");
+        // Apply wear with weather resistance
+        maintenanceSystem.ApplyWear(runwayID, weather, trafficVolume, weatherResistance);        
+    }
+    else
+    {
+        // Apply wear normally
+        maintenanceSystem.ApplyWear(runwayID, weather, trafficVolume);
+    }
+
+    logger.Log($"[HandleLanding] Applied wear to {runwayID}. Current wear: {maintenanceSystem.GetWearLevel(runwayID)}%. " +
+               $"Runway will be occupied for {runway.LandingDuration} ticks.");
+
+    return true;
+}
 }

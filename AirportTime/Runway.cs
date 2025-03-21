@@ -1,4 +1,12 @@
-﻿public class Runway : Item
+﻿public enum OccupationReason
+{
+    Landing,
+    Repair,
+    Maintenance,
+    Emergency
+}
+
+public class Runway : Item
 {
     public string Name { get; }
     public int Length { get; }
@@ -13,11 +21,15 @@
     
     public bool IsOccupied { get; private set; } = false;
     public int OccupiedCountdown { get; private set; } = 0;
-    public int LandingDuration = 10; // Landing process takes 5 ticks
+    public int LandingDuration = 10; // Landing process takes 10 ticks
     public int RepairDuaration = 10; // Repair process takes 10 ticks
+    
+    // New properties to track occupation details
+    public OccupationReason? CurrentOccupationReason { get; private set; } = null;
+    public string OccupyingEntity { get; private set; } = string.Empty;
 
-    public Runway(string name, int length, int tier, double price, string description)
-        : base(name, description, price, ItemType.Runway, tier, 1)
+    public Runway(int id, string name, int length, int tier, double price, string description)
+        : base(id, name, description, price, ItemType.Runway, tier, 1)
     {
         Name = name;
         Length = length;
@@ -37,51 +49,66 @@
         if (plane == null)
             throw new ArgumentNullException(nameof(plane));
 
-        return plane.RequiredRunwayLength <= Length;
+        return plane.RequiredRunwayLength <= Length && !IsOccupied;
     }
 
-    /// <summary>
-    /// Increment the runway's WearLevel by the amount specified.
-    /// The calculation of <c>totalWear</c> is done by the maintenance system,
-    /// but the actual state update is here.
-    /// </summary>
     public void ApplyWear(int totalWear)
     {
         WearLevel = Math.Min(100, WearLevel+totalWear);
     }
 
-    /// <summary>
-    /// Resets wear to zero and occupies the runway for 10 ticks.
-    /// </summary>
     public void Repair()
     {
         WearLevel = 0;
-        Occupy(RepairDuaration); // Occupy the runway for landing after repair
+        // Keep original method for backward compatibility
+        Occupy(RepairDuaration);
+        // Set additional details
+        CurrentOccupationReason = OccupationReason.Repair;
+        OccupyingEntity = "Maintenance Crew";
     }
 
+    // Keep original method for backward compatibility
     private void Occupy(int duration)
     {
         IsOccupied = true;
         OccupiedCountdown = duration;
     }
-    
-// Add this method to the Runway class to ensure proper occupation handling
 
-    /// <summary>
-    /// Occupies the runway specifically for a landing operation.
-    /// </summary>
+    // New method with additional parameters
+    private void OccupyWithDetails(int duration, OccupationReason reason, string entity)
+    {
+        IsOccupied = true;
+        OccupiedCountdown = duration;
+        CurrentOccupationReason = reason;
+        OccupyingEntity = entity;
+    }
+    
+    // Keep original method for backward compatibility
     public void OccupyForLanding()
     {
-        // Mark the runway as occupied for the landing duration
-        IsOccupied = true;
-        OccupiedCountdown = LandingDuration;
-    
+        Occupy(LandingDuration);
+        CurrentOccupationReason = OccupationReason.Landing;
+        OccupyingEntity = "Unknown Flight";
+        
         Console.WriteLine($"Runway {Name} is now occupied for landing. Will be free in {OccupiedCountdown} ticks.");
     }
+    
+    // New method with flight number
+    public void OccupyForLanding(string flightNumber)
+    {
+        if (string.IsNullOrEmpty(flightNumber))
+        {
+            OccupyForLanding();
+            return;
+        }
+        
+        Occupy(LandingDuration);
+        CurrentOccupationReason = OccupationReason.Landing;
+        OccupyingEntity = flightNumber;
+    
+        Console.WriteLine($"Runway {Name} is now occupied for landing of {flightNumber}. Will be free in {OccupiedCountdown} ticks.");
+    }
 
-    /// <summary>
-    /// Updates the runway's occupied status each tick.
-    /// </summary>
     public void UpdateOccupiedStatus()
     {
         if (IsOccupied && OccupiedCountdown > 0)
@@ -90,25 +117,37 @@
         
             if (OccupiedCountdown == 0)
             {
+                string occupationInfo = "";
+                if (CurrentOccupationReason.HasValue)
+                {
+                    occupationInfo = $" (previously {CurrentOccupationReason} by {OccupyingEntity})";
+                }
+                
+                Console.WriteLine($"Runway {Name} is now free{occupationInfo}.");
+                
+                // Clear occupation data
                 IsOccupied = false;
-                Console.WriteLine($"Runway {Name} is now free.");
+                CurrentOccupationReason = null;
+                OccupyingEntity = string.Empty;
             }
         }
     }
-    /// <summary>
-    /// Reduces the landing duration time by the specified percentage.
-    /// The minimum landing duration is 1 tick.
-    /// </summary>
-    /// <param name="reductionFactor">Percentage to reduce duration by (0.0 to 1.0)</param>
+    
     public void ReduceLandingDuration(double reductionFactor)
     {
-        // Ensure the reduction factor is within valid range
         reductionFactor = Math.Clamp(reductionFactor, 0.0, 1.0);
-    
-        // Calculate the new duration with a minimum of 1 tick
         int originalDuration = LandingDuration;
         LandingDuration = Math.Max(1, (int)(LandingDuration * (reductionFactor)));
     
         Console.WriteLine($"Runway {Name} landing duration reduced from {originalDuration} to {LandingDuration} ticks.");
+    }
+    
+    public string GetDetailedOccupationStatus()
+    {
+        if (!IsOccupied)
+            return "AVAILABLE";
+            
+        string reasonText = CurrentOccupationReason?.ToString() ?? "Unknown";
+        return $"OCCUPIED: {reasonText} by {OccupyingEntity} ({OccupiedCountdown} ticks remaining)";
     }
 }

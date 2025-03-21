@@ -12,9 +12,10 @@ public class SmallRunway : Runway, IPurchasable
     public string Description { get; }
     public RunwayTier CurrentTier { get; private set; }
     
-    public SmallRunway(string runwayName, int price, string desc) : 
-        base(runwayName, DefaultLength, (int)RunwayTier.Tier1, price, desc)
+    public SmallRunway(int id, string runwayName, int price, string desc) : 
+        base(id, runwayName, DefaultLength, (int)RunwayTier.Tier1, price, desc)
     {
+        Id = id;
         Name = runwayName;
         Price = price;  
         Description = desc;

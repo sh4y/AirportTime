@@ -29,7 +29,7 @@ public class ExperienceSystem
         // Level 1 starts at 0 XP
         levelRequirements[1] = 0;
         levelRequirements[2] = 825;   // ~20 flights to reach level 2 (at ~41 XP per flight)
-        levelRequirements[3] = 2480;  // ~50 total flights to reach level 3
+        levelRequirements[3] = 3500;  // ~50 total flights to reach level 3
         
         // Generate additional levels using the formula: previous × 1.8
         for (int level = 4; level <= 20; level++)

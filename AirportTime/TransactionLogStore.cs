@@ -106,7 +106,52 @@ public class TransactionLogStore : IDisposable
         }
         return list;
     }
-
+    /// <summary>
+    /// Retrieves the most recent transactions
+    /// </summary>
+    /// <param name="count">Number of transactions to retrieve</param>
+    /// <returns>List of transactions in reverse chronological order</returns>
+    public List<TreasuryTransaction> GetRecentTransactions(int count)
+    {
+        var transactions = new List<TreasuryTransaction>();
+        
+        try
+        {
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = @"
+                    SELECT * FROM TreasuryTransactions
+                    ORDER BY TimeStamp DESC
+                    LIMIT @count
+                ";
+                cmd.Parameters.AddWithValue("@count", count);
+                
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var transaction = new TreasuryTransaction
+                        {
+                            Currency = Enum.Parse<CurrencyType>(reader.GetString(reader.GetOrdinal("Currency"))),
+                            Amount = reader.GetDouble(reader.GetOrdinal("Amount")),
+                            SourceOrReason = reader.GetString(reader.GetOrdinal("SourceOrReason")),
+                            TransactionType = Enum.Parse<TransactionType>(reader.GetString(reader.GetOrdinal("TransactionType"))),
+                            TimeStamp = DateTime.Parse(reader.GetString(reader.GetOrdinal("TimeStamp"))),
+                            NewBalance = reader.GetDouble(reader.GetOrdinal("NewBalance")),
+                            OverdraftOccurred = reader.GetInt32(reader.GetOrdinal("Overdraft")) == 1
+                        };
+                        transactions.Add(transaction);
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Return empty list if there's an error
+        }
+        
+        return transactions;
+    }
     /// <summary>
     /// Closes the SQLite connection.
     /// </summary>

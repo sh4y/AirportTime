@@ -249,22 +249,18 @@ public class FlightLandingManager
         }
     }
     
-    /// <summary>
-    /// Completes the landing process for a successful landing.
-    /// </summary>
     private void CompleteSuccessfulLanding(Flight flight, Runway runway, int currentTick, bool isOnTime)
     {
-        
-        // Handle the landing in the runway manager
-        runwayManager.HandleLanding(runway.Name, weather, 10);
-        
+        // Handle the landing in the runway manager (pass the flight number)
+        runwayManager.HandleLanding(runway.Name, weather, 10, flight.FlightNumber);
+    
         // Calculate and add revenue
         double revenue = modifierManager.CalculateRevenue(flight, currentTick);
         treasury.AddFunds(revenue, "Flight Revenue");
-        
+    
         // Log the successful landing
         gameLogger.Log($"Flight {flight.FlightNumber} landed successfully on {runway.Name} and generated {revenue:C} in revenue.");
-        
+    
         // Trigger landing event for experience system
         OnFlightLanded?.Invoke(flight, runway, isOnTime, currentTick);
     }

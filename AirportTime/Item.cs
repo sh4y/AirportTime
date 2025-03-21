@@ -2,7 +2,7 @@
 // This class now implements IPurchasable so that items can define additional behavior on purchase.
 public abstract class Item : IPurchasable
 {
-    public int Id {get; private set;}
+    public int Id {get; protected set;}
     public string Name { get; private set; }
     public string Description { get; private set; }
     public double Price { get; private set; }
@@ -19,8 +19,9 @@ public abstract class Item : IPurchasable
     /// <param name="type">Type of the item (e.g., Runway, Staff, etc.).</param>
     /// <param name="tier">Tier level of the item.</param>
     /// <param name="availability">Optional initial availability (default is 1).</param>
-    public Item(string name, string description, double price, ItemType type, int tier, int availability = 1)
+    public Item(int id, string name, string description, double price, ItemType type, int tier, int availability = 1)
     {
+        Id = id;
         Name = name;
         Description = description;
         Price = price;

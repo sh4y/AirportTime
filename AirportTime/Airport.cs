@@ -122,67 +122,60 @@
         
         // Add the earned XP to our experience system
         ExperienceSystem.AddExperience(xpEarned);
-    }
+    } 
     
-    private void HandleLevelUp(int newLevel)
-    {
-        // Give a gold bonus for leveling up
-        double goldBonus = 1000 * newLevel;
-        Treasury.AddFunds(goldBonus, $"Level Up Bonus (Level {newLevel})");
-        
-        // Log the level up with additional information
-        GameLogger.Log($"AIRPORT LEVEL UP! Now Level {newLevel}");
-        GameLogger.Log($"Level {newLevel} Benefits: Gold Bonus: {goldBonus:C}, Increased Flight Complexity, New Features Unlocked");
-        
-        // Unlock new features based on level
-        UnlockFeaturesForLevel(newLevel);
-    }
+private void HandleLevelUp(int newLevel)
+{
+    // Give a gold bonus for leveling up
+    double goldBonus = 1000 * newLevel;
+    Treasury.AddFunds(goldBonus, $"Level Up Bonus (Level {newLevel})");
     
-    private void UnlockFeaturesForLevel(int level)
+    // Log the level up with additional information
+    GameLogger.Log($"AIRPORT LEVEL UP! Now Level {newLevel}");
+    GameLogger.Log($"Level {newLevel} Benefits: Gold Bonus: {goldBonus:C}, Increased Flight Complexity, New Features Unlocked");
+    
+    // Check for queued shop items to unlock at this level
+    Shop.CheckQueuedItemsForLevel(newLevel);
+    
+    // Unlock new features based on level
+    UnlockFeaturesForLevel(newLevel);
+}
+
+private void UnlockFeaturesForLevel(int level)
+{
+    // Unlock different features based on the airport level
+    // No need to add shop items here anymore - they're handled by the queue system
+    switch (level)
     {
-        // Unlock different features based on the airport level
-        switch (level)
-        {
-            case 2:
-                Shop.AddItemToShop(new MediumRunway("Medium Runway", 100000, "Capable of handling medium aircraft"));
-                GameLogger.Log("New shop item unlocked: Medium Runway");
-                break;
-            case 3:
-                // Add a revenue modifier for higher airport reputation
-                ModifierManager.AddModifier("High Airport Reputation", 1.25);
-                var item = new RunwayBuff("Runway Speed Upgrade", "Increases runway speed by 10%", 50000,
-                    BuffType.LandingDurationReduction, 0.9);
-                Shop.AddItemToShop(item);
-                GameLogger.Log("Reputation Bonus: All flights now generate 25% more revenue!");
-                break;
-            case 5:
-                Shop.AddItemToShop(new LargeRunway("Large Runway", 5000000, "Capable of handling large aircraft"));
-                GameLogger.Log("New shop item unlocked: Large Runway");
-                break;
+        case 3:
+            // Add a revenue modifier for higher airport reputation
+            ModifierManager.AddModifier("High Airport Reputation", 1.25);
+            GameLogger.Log("Reputation Bonus: All flights now generate 25% more revenue!");
+            break;
                 
-            case 7:
-                // Add a weather resistance modifier
-                RunwayManager.AddWeatherResistance(0.3);
-                GameLogger.Log("Weather Resistance: Runways now take 30% less damage from adverse weather!");
-                break;
+        case 7:
+            // Add a weather resistance modifier
+            RunwayManager.AddWeatherResistance(0.3);
+            GameLogger.Log("Weather Resistance: Runways now take 30% less damage from adverse weather!");
+            break;
                 
-            case 10:
-                // Add a VIP and emergency flight specialist
-                ModifierManager.AddModifier("Flight Specialist", 1.5);
-                GameLogger.Log("Flight Specialist: VIP and Emergency flights now generate 50% more revenue!");
-                break;
+        case 10:
+            // Add a VIP and emergency flight specialist
+            ModifierManager.AddModifier("Flight Specialist", 1.5);
+            GameLogger.Log("Flight Specialist: VIP and Emergency flights now generate 50% more revenue!");
+            break;
                 
-            default:
-                // For other levels, add a small revenue boost
-                if (level > 3 && level % 2 == 0)
-                {
-                    double boost = 1.0 + (level * 0.01);
-                    ModifierManager.AddModifier($"Level {level} Efficiency", boost);
-                    GameLogger.Log($"Efficiency Boost: All flights now generate {(boost - 1.0) * 100:F0}% more revenue!");
-                }
-                break;
-        }
+        default:
+            // For other levels, add a small revenue boost
+            if (level > 3 && level % 2 == 0)
+            {
+                double boost = 1.0 + (level * 0.01);
+                ModifierManager.AddModifier($"Level {level} Efficiency", boost);
+                GameLogger.Log($"Efficiency Boost: All flights now generate {(boost - 1.0) * 100:F0}% more revenue!");
+            }
+            break;
     }
+}
 
     public void ToggleLandingMode()
     {

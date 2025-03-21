@@ -1,5 +1,5 @@
 ﻿// Delegate for simulation events
-public delegate void SimulationEventAction(int tick);
+
 
 // EventScheduler class manages scheduled events.
 public class EventScheduler
