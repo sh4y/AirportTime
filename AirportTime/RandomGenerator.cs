@@ -1,4 +1,6 @@
-﻿public class RandomGenerator : IRandomGenerator
+﻿namespace AirportTime;
+
+public class RandomGenerator : IRandomGenerator
 {
     private Random random;
 

@@ -1,3 +1,5 @@
+using AirportTime;
+
 public class ShopLevelManager
 {
     private readonly List<QueuedShopItem> queuedItems = new List<QueuedShopItem>();

@@ -1,3 +1,5 @@
+namespace AirportTime;
+
 public class FlightGenerationService : IFlightGenerationService
 {
     private readonly FlightGenerator _flightGenerator;

@@ -1,4 +1,6 @@
-﻿public class MediumRunway : Runway
+﻿namespace AirportTime;
+
+public class MediumRunway : Runway
 {
     private const int DefaultLength = 7500;
     public RunwayTier CurrentTier { get; private set; }

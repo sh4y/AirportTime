@@ -1,3 +1,5 @@
+namespace AirportTime;
+
 public class FlightMetrics
 {
     private readonly Airport airport;
@@ -42,13 +44,13 @@ public class FlightMetrics
     
     public Dictionary<string, int> GetTopAirlines(int count = 5) => 
         _airlineOperations.OrderByDescending(kvp => kvp.Value)
-                          .Take(count)
-                          .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            .Take(count)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
                           
     public int TotalPassengersServed => CalculateTotalPassengers();
     
     public double AveragePassengersPerFlight => _totalFlightsProcessed > 0 ? 
-                                               (double)CalculateTotalPassengers() / _totalFlightsProcessed : 0;
+        (double)CalculateTotalPassengers() / _totalFlightsProcessed : 0;
     
     private int CalculateTotalPassengers()
     {

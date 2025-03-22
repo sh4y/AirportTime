@@ -1,4 +1,6 @@
 // AchievementShopHandler.cs
+namespace AirportTime;
+
 public class AchievementShopHandler
 {
     private readonly ShopInventory inventory;

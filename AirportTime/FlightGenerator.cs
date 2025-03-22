@@ -1,4 +1,6 @@
-﻿public class FlightGenerator 
+﻿using AirportTime;
+
+public class FlightGenerator 
 {
     private readonly IRandomGenerator randomGenerator;
     private readonly FlightSpawnProfile spawnProfile;

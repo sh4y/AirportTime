@@ -2,6 +2,9 @@
 // Flight class to represent flights and handle landing procedure
 // Plane class to represent planes that will land on the runways
 // Treasury class to manage player's gold balance
+
+namespace AirportTime;
+
 public class Treasury : ITreasury
 {
     // 1) Factor out magic numbers
@@ -33,9 +36,9 @@ public class Treasury : ITreasury
     /// <param name="startingBalance">Initial gold amount (defaults to 90).</param>
     /// <param name="goldPerTick">Gold gained each tick (defaults to 3).</param>
     public Treasury(GameLogger gameLogger,
-                    TransactionLogStore transactionStore,
-                    double startingBalance = DefaultStartingBalance,
-                    double goldPerTick = DefaultGoldPerTick)
+        TransactionLogStore transactionStore,
+        double startingBalance = DefaultStartingBalance,
+        double goldPerTick = DefaultGoldPerTick)
     {
         this.gameLogger = gameLogger;
         this.transactionStore = transactionStore;

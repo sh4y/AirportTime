@@ -1,5 +1,7 @@
 ﻿// File: AirportTime/Item.cs
 // This class now implements IPurchasable so that items can define additional behavior on purchase.
+namespace AirportTime;
+
 public abstract class Item : IPurchasable
 {
     public int Id {get; protected set;}

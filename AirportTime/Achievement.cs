@@ -1,3 +1,5 @@
+namespace AirportTime;
+
 /// <summary>
 /// Represents a single achievement that can be unlocked
 /// </summary>

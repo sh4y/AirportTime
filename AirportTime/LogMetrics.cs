@@ -1,3 +1,5 @@
+using AirportTime;
+
 public class LogMetrics
 {
     private readonly IGameLogger logger;

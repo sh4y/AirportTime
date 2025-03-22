@@ -1,3 +1,5 @@
+namespace AirportTime;
+
 /// <summary>
 /// Interface for logging game events
 /// </summary>

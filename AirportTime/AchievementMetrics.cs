@@ -1,3 +1,5 @@
+namespace AirportTime;
+
 public class AchievementMetrics
 {
     private readonly Airport airport;

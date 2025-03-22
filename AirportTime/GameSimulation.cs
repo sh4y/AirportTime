@@ -1,5 +1,8 @@
 ﻿
 // Game simulation class to simulate the purchase of items and running the airport
+
+using AirportTime;
+
 public class GameSimulation
 {
     public static void Msain()

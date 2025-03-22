@@ -1,5 +1,8 @@
 ﻿
 // The refactored Shop class that uses the components
+
+using AirportTime;
+
 public class Shop : IShop
 {
     private readonly ITreasury treasury;

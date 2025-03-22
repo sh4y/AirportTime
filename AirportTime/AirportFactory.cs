@@ -1,10 +1,12 @@
-using System;
+
+namespace AirportTime;
 
 /// <summary>
 /// Factory for creating Airport instances with proper dependency injection
 /// </summary>
 public class AirportFactory 
 {
+    public static int currentId = 0;
     /// <summary>
     /// Creates a new Airport instance with all dependencies initialized
     /// </summary>
@@ -70,24 +72,15 @@ public class AirportFactory
     public static Airport CreateAirportFromContainer(DependencyContainer container, string name)
     {
         // Create and return the airport with injected dependencies
-        return new Airport(
-            name,
-            container.Get<ITreasury>(),
-            container.Get<IRunwayManager>(),
-            container.Get<IShop>(),
-            container.Get<IFlightScheduler>(),
-            container.Get<IEventSystem>(),
-            container.Get<IGameLogger>(),
-            container.Get<IModifierManager>(),
-            container.Get<IExperienceSystem>(),
-            container.Get<IAchievementSystem>(),
-            container.Get<IFlightLandingManager>(),
-            container.Get<IFlightGenerationService>(),
-            container.Get<IFlightProcessingService>(),
-            container.Get<IRandomGenerator>(),
-            container.Get<IFailureTracker>(),
-            container.Get<IEmergencyFlightHandler>()
-        );
+        return new Airport(currentId++,
+            "International Airport", container.Get<ITreasury>(),
+            container.Get<IRunwayManager>(), container.Get<IShop>(),
+            container.Get<IFlightScheduler>(), container.Get<IEventSystem>(),
+            container.Get<IGameLogger>(), container.Get<IModifierManager>(),
+            container.Get<IExperienceSystem>(), container.Get<IAchievementSystem>(),
+            container.Get<IFlightLandingManager>(), container.Get<IFlightGenerationService>(),
+            container.Get<IFlightProcessingService>(), container.Get<IRandomGenerator>(),
+            container.Get<IFailureTracker>(), container.Get<IEmergencyFlightHandler>());
     }
     
     /// <summary>

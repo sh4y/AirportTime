@@ -1,5 +1,8 @@
 
 // AchievementSystem.cs
+
+namespace AirportTime;
+
 public class AchievementSystem : IAchievementSystem
 {
     private readonly Dictionary<string, int> flightTypeCounter = new Dictionary<string, int>();
@@ -52,84 +55,84 @@ public class AchievementSystem : IAchievementSystem
         unlockedAchievements[achievement.Id] = false;
     }
 
- // In AchievementSystem.cs, modify:
+    // In AchievementSystem.cs, modify:
 
 // Update the RecordFlightLanded method to check active flights count properly
-public void RecordFlightLanded(
-    Flight flight, 
-    bool isPerfectLanding = false, 
-    int runwayWear = 0, 
-    WeatherType currentWeather = WeatherType.Clear,
-    bool isNightTime = false,
-    int simultaneousFlights = 0)
-{
-    string flightType = flight.Type.ToString();
-    
-    // Increment counter for this flight type
-    flightTypeCounter[flightType]++;
-    int newCount = flightTypeCounter[flightType];
-    
-    // Track perfect landings if applicable
-    if (isPerfectLanding)
+    public void RecordFlightLanded(
+        Flight flight, 
+        bool isPerfectLanding = false, 
+        int runwayWear = 0, 
+        WeatherType currentWeather = WeatherType.Clear,
+        bool isNightTime = false,
+        int simultaneousFlights = 0)
     {
-        perfectLandingCounter++;
-        CheckPerfectLandingAchievements(perfectLandingCounter);
-    }
+        string flightType = flight.Type.ToString();
     
-    // Track landings on worn runways
-    if (runwayWear > 50) // More than 50% wear
-    {
-        wornRunwayLandingCounter++;
-        CheckRunwayExpertAchievements(wornRunwayLandingCounter);
-    }
+        // Increment counter for this flight type
+        flightTypeCounter[flightType]++;
+        int newCount = flightTypeCounter[flightType];
     
-    // Track total passengers
-    totalPassengers += flight.Passengers;
-    CheckPassengerMilestoneAchievements(totalPassengers);
+        // Track perfect landings if applicable
+        if (isPerfectLanding)
+        {
+            perfectLandingCounter++;
+            CheckPerfectLandingAchievements(perfectLandingCounter);
+        }
     
-    // Track weather-related landings
-    if (currentWeather != WeatherType.Clear)
-    {
-        weatherLandingCounter[currentWeather]++;
-        CheckWeatherMasterAchievements(currentWeather, weatherLandingCounter[currentWeather]);
-    }
+        // Track landings on worn runways
+        if (runwayWear > 50) // More than 50% wear
+        {
+            wornRunwayLandingCounter++;
+            CheckRunwayExpertAchievements(wornRunwayLandingCounter);
+        }
     
-    // Track night flights
-    if (isNightTime)
-    {
-        nightFlightCounter++;
-        CheckNightFlightAchievements(nightFlightCounter);
-    }
+        // Track total passengers
+        totalPassengers += flight.Passengers;
+        CheckPassengerMilestoneAchievements(totalPassengers);
     
-    // Track consecutive flights
-    consecutiveFlightCounter++;
-    CheckConsecutiveFlightAchievements(consecutiveFlightCounter);
+        // Track weather-related landings
+        if (currentWeather != WeatherType.Clear)
+        {
+            weatherLandingCounter[currentWeather]++;
+            CheckWeatherMasterAchievements(currentWeather, weatherLandingCounter[currentWeather]);
+        }
     
-    // Check if we have a new record for simultaneous flights
-    if (simultaneousFlights > maxSimultaneousFlights)
-    {
-        maxSimultaneousFlights = simultaneousFlights;
-        logger.Log($"New record: {maxSimultaneousFlights} flights managed simultaneously!");
-        CheckSimultaneousFlightAchievements(maxSimultaneousFlights);
-    }
+        // Track night flights
+        if (isNightTime)
+        {
+            nightFlightCounter++;
+            CheckNightFlightAchievements(nightFlightCounter);
+        }
     
-    // Track emergency landings
-    if (flight.Priority == FlightPriority.Emergency)
-    {
-        emergencyLandingCounter++;
-        CheckEmergencyLandingAchievements(emergencyLandingCounter);
-    }
+        // Track consecutive flights
+        consecutiveFlightCounter++;
+        CheckConsecutiveFlightAchievements(consecutiveFlightCounter);
     
-    // Check for achievement unlocks
-    CheckFlightTypeAchievements(flight.Type, newCount);
+        // Check if we have a new record for simultaneous flights
+        if (simultaneousFlights > maxSimultaneousFlights)
+        {
+            maxSimultaneousFlights = simultaneousFlights;
+            logger.Log($"New record: {maxSimultaneousFlights} flights managed simultaneously!");
+            CheckSimultaneousFlightAchievements(maxSimultaneousFlights);
+        }
     
-    // Log the milestone if it's a nice round number
-    if (newCount == 10 || newCount == 30 || newCount == 100 || 
-        newCount == 500 || newCount % 1000 == 0)
-    {
-        logger.Log($"Milestone: {newCount} {flightType} flights landed!");
-    }
-}    // Reset consecutive flights counter (call when a flight is canceled)
+        // Track emergency landings
+        if (flight.Priority == FlightPriority.Emergency)
+        {
+            emergencyLandingCounter++;
+            CheckEmergencyLandingAchievements(emergencyLandingCounter);
+        }
+    
+        // Check for achievement unlocks
+        CheckFlightTypeAchievements(flight.Type, newCount);
+    
+        // Log the milestone if it's a nice round number
+        if (newCount == 10 || newCount == 30 || newCount == 100 || 
+            newCount == 500 || newCount % 1000 == 0)
+        {
+            logger.Log($"Milestone: {newCount} {flightType} flights landed!");
+        }
+    }    // Reset consecutive flights counter (call when a flight is canceled)
     public void ResetConsecutiveFlights()
     {
         consecutiveFlightCounter = 0;

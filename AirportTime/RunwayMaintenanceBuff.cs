@@ -1,3 +1,5 @@
+using AirportTime;
+
 public class RunwayMaintenanceBuff : Item
 {
     public double MaintenanceTimeReduction { get; }

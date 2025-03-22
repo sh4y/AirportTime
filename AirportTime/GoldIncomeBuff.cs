@@ -1,3 +1,5 @@
+namespace AirportTime;
+
 /// <summary>
 /// Represents a buff that increases gold income from all sources
 /// </summary>

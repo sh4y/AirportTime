@@ -1,3 +1,5 @@
+namespace AirportTime;
+
 public class ExperienceMetrics
 {
     private readonly Airport airport;

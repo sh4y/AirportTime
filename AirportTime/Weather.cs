@@ -1,3 +1,5 @@
+using AirportTime;
+
 public class Weather
 {
     public WeatherType CurrentWeather { get; private set; }

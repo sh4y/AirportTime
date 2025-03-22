@@ -1,4 +1,6 @@
-﻿public class FlightDelayEvent : IEvent
+﻿using AirportTime;
+
+public class FlightDelayEvent : IEvent
 {
     public string EventName { get; private set; }
     public Flight Flight { get; private set; }

@@ -1,4 +1,6 @@
-﻿public class LargeRunway : Runway
+﻿namespace AirportTime;
+
+public class LargeRunway : Runway
 {
     private const int DefaultLength = 10000;
     public RunwayTier CurrentTier { get; private set; }

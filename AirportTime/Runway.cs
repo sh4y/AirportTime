@@ -1,4 +1,6 @@
-﻿public enum OccupationReason
+﻿using AirportTime;
+
+public enum OccupationReason
 {
     Landing,
     Repair,

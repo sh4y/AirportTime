@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+namespace AirportTime;
 
 public class RunwayMetrics
 {
@@ -40,12 +38,12 @@ public class RunwayMetrics
         runwayRevenue.ToDictionary(
             kvp => kvp.Key, 
             kvp => runwayLandings.ContainsKey(kvp.Key) && runwayLandings[kvp.Key] > 0 ? 
-                   kvp.Value / runwayLandings[kvp.Key] : 0);
+                kvp.Value / runwayLandings[kvp.Key] : 0);
                    
     public double GetMaintenanceFrequency(string runwayName) => 
         runwayLandings.ContainsKey(runwayName) && runwayMaintenance.ContainsKey(runwayName) && 
         runwayMaintenance[runwayName] > 0 ? 
-        (double)runwayLandings[runwayName] / runwayMaintenance[runwayName] : 0;
+            (double)runwayLandings[runwayName] / runwayMaintenance[runwayName] : 0;
         
     public Dictionary<string, double> GetRunwayProfitability() 
     {

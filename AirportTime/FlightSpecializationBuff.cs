@@ -1,4 +1,4 @@
-using System;
+namespace AirportTime;
 
 /// <summary>
 /// Represents a buff that increases revenue for a specific flight type

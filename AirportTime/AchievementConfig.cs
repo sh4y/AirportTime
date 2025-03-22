@@ -1,4 +1,6 @@
 // AchievementConfig.cs - Configuration parameters for easy editing
+namespace AirportTime;
+
 public static class AchievementConfig
 {
     // Flight Type Achievement thresholds - extended progression

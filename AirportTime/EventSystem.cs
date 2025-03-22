@@ -1,4 +1,6 @@
-﻿public class EventSystem : IEventSystem
+﻿namespace AirportTime;
+
+public class EventSystem : IEventSystem
 {
     private readonly IRandomGenerator randomGenerator;
     private readonly List<IEvent> possibleEvents = new List<IEvent>();

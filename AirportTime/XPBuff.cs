@@ -1,3 +1,5 @@
+using AirportTime;
+
 /// <summary>
 /// Represents a buff that increases XP earned from flights
 /// </summary>

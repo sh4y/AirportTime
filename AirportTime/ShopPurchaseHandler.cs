@@ -1,3 +1,5 @@
+namespace AirportTime;
+
 public class ShopPurchaseHandler
 {
     private readonly ITreasury treasury;

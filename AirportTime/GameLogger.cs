@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
+﻿namespace AirportTime;
 
 /// <summary>
 /// A logger that stores messages in memory, prints them to the console,
@@ -87,4 +85,3 @@ public class GameLogger : IDisposable, IGameLogger
         logStore.Dispose();
     }
 }
-

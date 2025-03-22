@@ -1,4 +1,6 @@
-﻿public interface IPurchasable
+﻿namespace AirportTime;
+
+public interface IPurchasable
 {
     int Id { get; }
     string Name { get; }

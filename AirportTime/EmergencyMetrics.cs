@@ -1,12 +1,9 @@
-public class EmergencyMetrics
-{
-    private readonly Airport airport;
+namespace AirportTime;
 
-    public EmergencyMetrics(Airport airport)
-    {
-        this.airport = airport;
-    }
-    
+public class EmergencyMetrics(Airport airport)
+{
+    private readonly Airport airport = airport;
+
     public int ActiveEmergencyCount => airport.EmergencyFlightHandler.GetActiveEmergencyCount();
     
     public int TotalEmergenciesHandled 

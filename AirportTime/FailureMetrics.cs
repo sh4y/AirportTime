@@ -1,3 +1,5 @@
+using AirportTime;
+
 public class FailureMetrics
 {
     private readonly Airport airport;

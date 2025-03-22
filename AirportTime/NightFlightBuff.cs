@@ -1,3 +1,5 @@
+using AirportTime;
+
 public class NightFlightBuff : Item
 {
     public double NightRevenueBonus { get; }

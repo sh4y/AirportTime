@@ -1,6 +1,9 @@
 
 
 // A facade to access all metrics in one place
+
+namespace AirportTime;
+
 public class GameMetrics
 {
     public AirportMetrics AirportMetrics { get; }

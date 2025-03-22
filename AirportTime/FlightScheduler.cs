@@ -1,6 +1,9 @@
 ﻿// Game simulation class to simulate the purchase of items and running the airport
 // Flight class to represent flights and handle landing procedure
 // Plane class to represent planes that will land on the runways
+
+using AirportTime;
+
 public class FlightScheduler : IFlightScheduler
 {
     private readonly Dictionary<int, List<Flight>> scheduledFlights = new();

@@ -1,3 +1,5 @@
+using AirportTime;
+
 /// <summary>
 /// Represents an achievement with its unlock status and progress
 /// </summary>

@@ -1,3 +1,5 @@
+using AirportTime;
+
 public class WeatherMasterBuff : Item
 {
     public WeatherType WeatherType { get; }
