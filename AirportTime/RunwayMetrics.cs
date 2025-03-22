@@ -1,10 +1,57 @@
 public class RunwayMetrics
 {
     private readonly Airport airport;
+    private readonly Dictionary<string, int> runwayLandings = new Dictionary<string, int>();
+    private readonly Dictionary<string, int> runwayMaintenance = new Dictionary<string, int>();
+    private readonly Dictionary<string, double> runwayRevenue = new Dictionary<string, double>();
 
     public RunwayMetrics(Airport airport)
     {
         this.airport = airport;
+    }
+    
+    public void RecordLanding(string runwayName, double revenue)
+    {
+        if (!runwayLandings.ContainsKey(runwayName))
+            runwayLandings[runwayName] = 0;
+        if (!runwayRevenue.ContainsKey(runwayName))
+            runwayRevenue[runwayName] = 0;
+            
+        runwayLandings[runwayName]++;
+        runwayRevenue[runwayName] += revenue;
+    }
+    
+    public void RecordMaintenance(string runwayName, double cost)
+    {
+        if (!runwayMaintenance.ContainsKey(runwayName))
+            runwayMaintenance[runwayName] = 0;
+            
+        runwayMaintenance[runwayName]++;
+    }
+    
+    // Enhanced methods
+    public Dictionary<string, int> GetRunwayUsageStats() => new Dictionary<string, int>(runwayLandings);
+    
+    public Dictionary<string, double> GetRunwayEfficiency() => 
+        runwayRevenue.ToDictionary(
+            kvp => kvp.Key, 
+            kvp => runwayLandings.ContainsKey(kvp.Key) && runwayLandings[kvp.Key] > 0 ? 
+                   kvp.Value / runwayLandings[kvp.Key] : 0);
+                   
+    public double GetMaintenanceFrequency(string runwayName) => 
+        runwayLandings.ContainsKey(runwayName) && runwayMaintenance.ContainsKey(runwayName) && 
+        runwayMaintenance[runwayName] > 0 ? 
+        (double)runwayLandings[runwayName] / runwayMaintenance[runwayName] : 0;
+        
+    public Dictionary<string, double> GetRunwayProfitability() 
+    {
+        var result = new Dictionary<string, double>();
+        foreach (var runway in runwayRevenue.Keys)
+        {
+            double maintenance = runwayMaintenance.ContainsKey(runway) ? runwayMaintenance[runway] * 200 : 0; // Estimate
+            result[runway] = runwayRevenue[runway] - maintenance;
+        }
+        return result;
     }
 
     public List<RunwayInfo> GetRunwayInfo()

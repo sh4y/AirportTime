@@ -2,7 +2,7 @@
 
 public class SmallRunway : Runway, IPurchasable
 {
-    private const int DefaultLength = 5000; // large runway length
+    private const int DefaultLength = 1500; // large runway length
     private const int DefaultTier = 1;         // tier 3 for large runway
     public int Id { get; set; }
     public string Name { get; }
