@@ -1,59 +1,62 @@
 // AchievementConfig.cs - Configuration parameters for easy editing
 public static class AchievementConfig
 {
-    // Flight Type Achievement thresholds
-    public static readonly int[] FlightTypeThresholds = { 10, 30, 100, 500, 1000, 5000 };
+    // Flight Type Achievement thresholds - extended progression
+    public static readonly int[] FlightTypeThresholds = { 20, 60, 200, 750, 2500, 7500, 15000 };
 
-    // Perfect Landing Achievement thresholds
-    public static readonly int[] PerfectLandingThresholds = { 5, 20, 50, 200, 500, 1000 };
+    // Perfect Landing Achievement thresholds - extended progression
+    public static readonly int[] PerfectLandingThresholds = { 10, 35, 100, 300, 800, 2000, 4000 };
 
-    // Runway Expert Achievement thresholds
-    public static readonly int[] RunwayExpertThresholds = { 10, 30, 60, 120, 240, 500 };
+    // Runway Expert Achievement thresholds - extended progression
+    public static readonly int[] RunwayExpertThresholds = { 15, 45, 100, 250, 500, 1000, 2000 };
 
-    // Passenger Milestone Achievement configuration
+    // Passenger Milestone Achievement configuration - increased range
     public static readonly int PassengerMilestoneBaseValue = 2;
-    public static readonly int PassengerMilestoneMinExponent = 6;  // 2^6 = 64
-    public static readonly int PassengerMilestoneMaxExponent = 20; // 2^20 = 1,048,576
+    public static readonly int PassengerMilestoneMinExponent = 13;  // 2^7 = 128
+    public static readonly int PassengerMilestoneMaxExponent = 24; // 2^24 = 16,777,216
 
-    // Weather Master Achievement thresholds
+    // Weather Master Achievement thresholds - extended progression
     public static readonly Dictionary<WeatherType, int[]> WeatherMasterThresholds = new Dictionary<WeatherType, int[]>
     {
-        { WeatherType.Rainy, new[] { 5, 15, 50, 150 } },
-        { WeatherType.Foggy, new[] { 3, 10, 30, 100 } },
-        { WeatherType.Snowy, new[] { 3, 10, 30, 100 } },
-        { WeatherType.Stormy, new[] { 2, 5, 15, 50 } }
+        { WeatherType.Rainy, new[] { 15, 45, 150, 450, 1000 } },
+        { WeatherType.Foggy, new[] { 10, 30, 100, 300, 750 } },
+        { WeatherType.Snowy, new[] { 10, 30, 100, 300, 750 } },
+        { WeatherType.Stormy, new[] { 8, 25, 75, 200, 500 } }
     };
 
-    // Night Flight Achievement thresholds
-    public static readonly int[] NightFlightThresholds = { 10, 25, 50, 100, 200 };
+    // Night Flight Achievement thresholds - extended progression
+    public static readonly int[] NightFlightThresholds = { 25, 75, 175, 350, 700, 1500 };
 
-    // Consecutive Flight Achievement thresholds
-    public static readonly int[] ConsecutiveFlightThresholds = { 5, 15, 30, 50, 100 };
+    // Consecutive Flight Achievement thresholds - extended progression
+    public static readonly int[] ConsecutiveFlightThresholds = { 10, 30, 60, 120, 250, 500 };
 
-    // Simultaneous Flight Achievement thresholds
-    public static readonly int[] SimultaneousFlightThresholds = { 3, 5, 8, 12, 15 };
+    // Simultaneous Flight Achievement thresholds - extended progression
+    public static readonly int[] SimultaneousFlightThresholds = { 5, 8, 12, 18, 25, 35 };
 
-    // Emergency Landing Achievement thresholds
-    public static readonly int[] EmergencyLandingThresholds = { 3, 10, 25, 50, 100 };
+    // Emergency Landing Achievement thresholds - extended progression
+    public static readonly int[] EmergencyLandingThresholds = { 5, 20, 50, 120, 250, 500 };
 
-    // Milestone titles for passenger achievements
+    // Milestone titles for passenger achievements - extended for new exponents
     public static readonly Dictionary<int, string> PassengerMilestoneTitles = new Dictionary<int, string>()
     {
-        { 6, "First Steps" },           // 64 passengers
-        { 7, "Taking Off" },            // 128 passengers
-        { 8, "Regional Hub" },          // 256 passengers
-        { 9, "People Mover" },          // 512 passengers
-        { 10, "Terminal Bustle" },      // 1,024 passengers
-        { 11, "Thousand Club" },        // 2,048 passengers
-        { 12, "People Planet" },        // 4,096 passengers
-        { 13, "Passenger Paradise" },   // 8,192 passengers
-        { 14, "Aviation Empire" },      // 16,384 passengers
-        { 15, "Skybound Metropolis" },  // 32,768 passengers
-        { 16, "Global Gateway" },       // 65,536 passengers
-        { 17, "Passenger Kingdom" },    // 131,072 passengers
-        { 18, "Interstellar Terminal" },// 262,144 passengers
-        { 19, "Galactic Transport" },   // 524,288 passengers
-        { 20, "Universal Transit Hub" } // 1,048,576 passengers
+        { 7, "First Steps" },            // 128 passengers
+        { 8, "Taking Off" },             // 256 passengers
+        { 9, "Regional Hub" },           // 512 passengers
+        { 10, "People Mover" },          // 1,024 passengers
+        { 11, "Terminal Bustle" },       // 2,048 passengers
+        { 12, "Thousand Club" },         // 4,096 passengers
+        { 13, "People Planet" },         // 8,192 passengers
+        { 14, "Passenger Paradise" },    // 16,384 passengers
+        { 15, "Aviation Empire" },       // 32,768 passengers
+        { 16, "Skybound Metropolis" },   // 65,536 passengers
+        { 17, "Global Gateway" },        // 131,072 passengers
+        { 18, "Passenger Kingdom" },     // 262,144 passengers
+        { 19, "Interstellar Terminal" }, // 524,288 passengers
+        { 20, "Galactic Transport" },    // 1,048,576 passengers
+        { 21, "Universal Transit Hub" }, // 2,097,152 passengers
+        { 22, "Cosmic Travel Network" }, // 4,194,304 passengers
+        { 23, "Dimensional Portal" },    // 8,388,608 passengers
+        { 24, "Transcendent Station" }   // 16,777,216 passengers
     };
     
     // Achievement Buff Rewards - Easily modify rewards here
