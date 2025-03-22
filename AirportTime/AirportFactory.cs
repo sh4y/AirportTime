@@ -1,5 +1,12 @@
 public class AirportFactory
 {
+    /// <summary>
+    /// Creates a new Airport instance with all dependencies initialized
+    /// </summary>
+    /// <param name="name">Name of the airport</param>
+    /// <param name="startingGold">Initial gold amount</param>
+    /// <param name="tickManager">The tick manager to use</param>
+    /// <returns>A fully configured Airport instance</returns>
     public static Airport CreateAirport(string name, double startingGold, TickManager tickManager)
     {
         // Create core dependencies
@@ -71,6 +78,26 @@ public class AirportFactory
             failureTracker,
             emergencyFlightHandler
         );
+        
+        return airport;
+    }
+    
+    /// <summary>
+    /// Creates a new Airport instance with view controller setup
+    /// </summary>
+    /// <param name="name">Name of the airport</param>
+    /// <param name="startingGold">Initial gold amount</param>
+    /// <param name="tickManager">The tick manager to use</param>
+    /// <param name="view">The view implementation to use</param>
+    /// <returns>A fully configured Airport instance with view controller</returns>
+    public static Airport CreateAirportWithView(string name, double startingGold, TickManager tickManager, IAirportView view)
+    {
+        // Create the airport using the existing method
+        var airport = CreateAirport(name, startingGold, tickManager);
+        
+        // Create a view controller and configure the landing manager to use it
+        var viewController = new AirportViewController(view, airport);
+        airport.LandingManager.SetViewController(viewController);
         
         return airport;
     }

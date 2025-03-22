@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 public class RunwayMetrics
 {
     private readonly Airport airport;
@@ -56,6 +60,7 @@ public class RunwayMetrics
 
     public List<RunwayInfo> GetRunwayInfo()
     {
+        // Get runways directly using the IRunwayProvider interface
         var runways = GetAllRunways();
         var result = new List<RunwayInfo>();
 
@@ -77,9 +82,19 @@ public class RunwayMetrics
         return result;
     }
 
+    /// <summary>
+    /// Gets all runways from the airport
+    /// </summary>
     private List<Runway> GetAllRunways()
     {
-        var runways = new List<Runway>();
+        // First try to use the IRunwayProvider interface
+        if (airport.RunwayManager is IRunwayProvider provider)
+        {
+            return provider.GetRunways();
+        }
+        
+        // Fall back to reflection or known runway names if provider is not available
+        var results = new List<Runway>();
         
         // Try to access runways through reflection
         try
@@ -92,7 +107,7 @@ public class RunwayMetrics
                 var runwaysList = fieldInfo.GetValue(airport.RunwayManager) as List<Runway>;
                 if (runwaysList != null)
                 {
-                    runways.AddRange(runwaysList);
+                    results.AddRange(runwaysList);
                 }
             }
         }
@@ -105,12 +120,12 @@ public class RunwayMetrics
                 var runway = airport.RunwayManager.GetRunwayByName(name);
                 if (runway != null)
                 {
-                    runways.Add(runway);
+                    results.Add(runway);
                 }
             }
         }
         
-        return runways;
+        return results;
     }
 
     private string DetermineRunwayType(Runway runway)

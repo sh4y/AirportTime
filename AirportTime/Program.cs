@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 
 namespace AirportTime
 {
@@ -10,13 +9,19 @@ namespace AirportTime
             // Create core services
             var tickManager = new TickManager();
             
-            // Create the airport with its dependencies (including landing manager)
-            var airport = AirportFactory.CreateAirport("International Airport", 2000, tickManager);
+            // Create the view (using our new simplified implementation)
+            IAirportView view = new ConsoleUI();
+            
+            // Create the airport with view controller already configured
+            var airport = AirportFactory.CreateAirportWithView("International Airport", 2000, tickManager, view);
+            
+            // Create the view controller with our new implementation
+            var viewController = new AirportViewController(view, airport);
             
             // Create flight generator for manual flight creation
             var flightGenerator = new FlightGenerator(new RandomGenerator());
             
-            // Create input handlers
+            // Create input handler
             var inputHandler = new InputHandler(airport, flightGenerator, tickManager, airport.GameLogger);
             
             // Setup tick event handler
@@ -28,7 +33,10 @@ namespace AirportTime
                 // Skip display if game is over
                 if (!airport.IsGameOver)
                 {
-                    ConsoleUI.DisplayStatus(airport, currentTick);
+                    // Update the view using the controller
+                    viewController.UpdateView(airport, currentTick);
+                    
+                    // Handle input
                     inputHandler.HandleInput(currentTick);
                 }
                 else

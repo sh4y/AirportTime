@@ -4,6 +4,7 @@ using System.Linq;
 
 /// <summary>
 /// Manages the process of landing flights, offering both automatic and manual runway selection.
+/// Refactored to use the AirportViewController for UI interactions.
 /// </summary>
 public class FlightLandingManager
 {
@@ -16,6 +17,9 @@ public class FlightLandingManager
     private readonly IRandomGenerator randomGenerator;
     private readonly TickManager tickManager;
     private readonly EmergencyFlightHandler emergencyFlightHandler;
+    
+    // Reference to the airport view controller for UI interactions
+    private AirportViewController viewController;
     
     // Define the landing mode
     public enum LandingMode
@@ -49,6 +53,15 @@ public class FlightLandingManager
         this.tickManager = tickManager;
         this.emergencyFlightHandler = emergencyFlightHandler;
         this.weather = new Weather(randomGenerator);
+    }
+    
+    /// <summary>
+    /// Sets the view controller used for UI interactions
+    /// </summary>
+    /// <param name="controller">The controller to use</param>
+    public void SetViewController(AirportViewController controller)
+    {
+        this.viewController = controller;
     }
 
     /// <summary>
@@ -140,8 +153,7 @@ public class FlightLandingManager
     }
 
     /// <summary>
-    /// Processes a manual landing by prompting the user to select a runway.
-    /// Game will pause during selection.
+    /// Processes a manual landing by prompting the user to select a runway through the view controller.
     /// </summary>
     private bool ProcessManualLanding(Flight flight, int currentTick, bool isOnTime)
     {
@@ -165,126 +177,55 @@ public class FlightLandingManager
 
         try
         {
-            // Display landing request and runway options
-            Console.WriteLine();
-            Console.WriteLine(new string('=', 60));
+            // Use the view controller to prompt for runway selection
+            Runway selectedRunway = null;
             
-            // Highlight emergency flights
-            if (flight.Priority == FlightPriority.Emergency || flight.Type == FlightType.Emergency)
+            if (viewController != null)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"⚠️ EMERGENCY FLIGHT {flight.FlightNumber} REQUIRES IMMEDIATE LANDING ⚠️");
-                Console.ResetColor();
+                selectedRunway = viewController.PromptRunwaySelection(flight, availableRunways);
             }
             else
             {
-                Console.WriteLine($"Flight {flight.FlightNumber} requires landing. Please assign a runway:");
+                // Fallback to auto-selection if no view controller is available
+                selectedRunway = availableRunways.FirstOrDefault();
+                gameLogger.Log($"No view controller available, auto-selecting runway {selectedRunway?.Name ?? "None"}");
             }
             
-            Console.WriteLine(new string('-', 60));
-            
-            // Display flight details
-            Console.WriteLine($"Flight Details: {flight.FlightNumber} ({flight.Type}, {flight.Priority})");
-            Console.WriteLine($"Aircraft: {flight.Plane.PlaneID} (Size: {flight.Plane.Size}, Required Runway Length: {flight.Plane.RequiredRunwayLength}m)");
-            Console.WriteLine($"Passengers: {flight.Passengers}");
-            Console.WriteLine(new string('-', 60));
-            
-            // Display runway options
-            Console.WriteLine("Available Runways:");
-            for (int i = 0; i < availableRunways.Count; i++)
+            // If the user selected a runway
+            if (selectedRunway != null)
             {
-                Console.WriteLine($"{i + 1}. {availableRunways[i].Name} " +
-                                  $"(Length: {availableRunways[i].Length}m, " +
-                                  $"Wear: {availableRunways[i].WearLevel}%)");
-            }
-            Console.WriteLine(new string('-', 60));
-            
-            // Only show auto-select option for non-emergency flights
-            bool isEmergency = flight.Priority == FlightPriority.Emergency || flight.Type == FlightType.Emergency;
-            if (!isEmergency)
-            {
-                Console.WriteLine($"{availableRunways.Count + 1}. Auto-select best runway");
-            }
-            
-            Console.WriteLine($"{(isEmergency ? availableRunways.Count + 1 : availableRunways.Count + 2)}. Delay flight (5 ticks)");
-            Console.WriteLine(new string('=', 60));
-            
-            // Get user input (no timeout needed since game is paused)
-            Console.Write("Enter your selection: ");
-            string input = Console.ReadLine();
-
-            // Process the selection
-            bool result = false;
-            
-            if (int.TryParse(input, out int selection))
-            {
-                // Auto-select option (only for non-emergency flights)
-                if (!isEmergency && selection == availableRunways.Count + 1)
+                // Double-check that the runway is still not occupied
+                if (selectedRunway.IsOccupied)
                 {
-                    Console.WriteLine("Auto-selecting best runway...");
-                    result = ProcessAutomaticLanding(flight, currentTick, isOnTime);
+                    gameLogger.Log($"Flight {flight.FlightNumber} delayed — selected runway {selectedRunway.Name} became occupied.");
+                    eventSystem.TriggerDelayEvent(flight, 5, "Selected runway became occupied", currentTick);
+                    return false;
                 }
-                // Delay option
-                else if ((isEmergency && selection == availableRunways.Count + 1) || 
-                         (!isEmergency && selection == availableRunways.Count + 2))
+                
+                // Attempt landing
+                if (!flight.AttemptLanding(selectedRunway))
                 {
-                    Console.WriteLine("Flight delayed by controller decision.");
-                    eventSystem.TriggerDelayEvent(flight, 5, "Controller decision", currentTick);
-                    result = false;
+                    gameLogger.Log($"Flight {flight.FlightNumber} failed manual landing attempt on {selectedRunway.Name}.");
+                    eventSystem.TriggerDelayEvent(flight, 5, "Failed landing attempt", currentTick);
+                    return false;
                 }
-                // Valid runway selection
-                else if (selection >= 1 && selection <= availableRunways.Count)
+                
+                CompleteSuccessfulLanding(flight, selectedRunway, currentTick, isOnTime);
+                
+                // If this was an emergency flight, mark it as handled
+                if (flight.Priority == FlightPriority.Emergency || flight.Type == FlightType.Emergency)
                 {
-                    Runway selectedRunway = availableRunways[selection - 1];
-                    
-                    // Double-check that the runway is still not occupied
-                    if (selectedRunway.IsOccupied)
-                    {
-                        Console.WriteLine($"Runway {selectedRunway.Name} has become occupied since selection.");
-                        gameLogger.Log($"Flight {flight.FlightNumber} delayed — selected runway {selectedRunway.Name} became occupied.");
-                        eventSystem.TriggerDelayEvent(flight, 5, "Selected runway became occupied", currentTick);
-                        result = false;
-                    }
-                    // Attempt landing
-                    else if (!flight.AttemptLanding(selectedRunway))
-                    {
-                        gameLogger.Log($"Flight {flight.FlightNumber} failed manual landing attempt on {selectedRunway.Name}.");
-                        eventSystem.TriggerDelayEvent(flight, 5, "Failed landing attempt", currentTick);
-                        result = false;
-                    }
-                    else
-                    {
-                        CompleteSuccessfulLanding(flight, selectedRunway, currentTick, isOnTime);
-                        
-                        // If this was an emergency flight, mark it as handled
-                        if (flight.Priority == FlightPriority.Emergency || flight.Type == FlightType.Emergency)
-                        {
-                            emergencyFlightHandler.MarkEmergencyHandled(flight.FlightNumber);
-                        }
-                        
-                        result = true;
-                    }
+                    emergencyFlightHandler.MarkEmergencyHandled(flight.FlightNumber);
                 }
-                else
-                {
-                    // Invalid selection number
-                    Console.WriteLine("Invalid selection. Using delay option...");
-                    eventSystem.TriggerDelayEvent(flight, 5, "Invalid selection", currentTick);
-                    result = false;
-                }
+                
+                return true;
             }
             else
             {
-                // Invalid input (not a number)
-                Console.WriteLine("Invalid input. Using delay option...");
-                eventSystem.TriggerDelayEvent(flight, 5, "Invalid input", currentTick);
-                result = false;
+                // User chose to delay or auto-select
+                eventSystem.TriggerDelayEvent(flight, 5, "User decision", currentTick);
+                return false;
             }
-            
-            // Show simple message and auto-continue after 3 seconds
-            ShowRunwayAnimationWithAutoResume(result);
-            
-            return result;
         }
         finally
         {
@@ -299,7 +240,7 @@ public class FlightLandingManager
     
     private void CompleteSuccessfulLanding(Flight flight, Runway runway, int currentTick, bool isOnTime)
     {
-        // Handle the landing in the runway manager (pass the flight number)
+        // Handle the landing in the runway manager
         runwayManager.HandleLanding(runway.Name, weather, 10, flight.FlightNumber);
     
         // Calculate and add revenue
@@ -311,22 +252,9 @@ public class FlightLandingManager
     
         // Trigger landing event for experience system
         OnFlightLanded?.Invoke(flight, runway, isOnTime, currentTick);
-    }
-
-    /// <summary>
-    /// Displays a simple message and auto-continues after 3 seconds
-    /// </summary>
-    private void ShowRunwayAnimationWithAutoResume(bool landingSuccessful)
-    {
-        Console.WriteLine();
-        Console.WriteLine(new string('-', 60));
-        Console.WriteLine(landingSuccessful 
-            ? "Landing successful. Resuming in 3 seconds..." 
-            : "Flight delayed. Resuming in 3 seconds...");
-        Console.WriteLine(new string('-', 60));
         
-        // Pause for 3 seconds then auto-continue
-        System.Threading.Thread.Sleep(3000);
+        // Show a notification through the view controller if available
+        viewController?.ShowNotification($"Flight {flight.FlightNumber} landed successfully and generated {revenue:C}");
     }
 
     /// <summary>
@@ -339,5 +267,8 @@ public class FlightLandingManager
             : LandingMode.Automatic;
         
         gameLogger.Log($"Landing mode switched to {CurrentLandingMode}.");
+        
+        // Show a notification through the view controller if available
+        viewController?.ShowNotification($"Landing mode switched to {CurrentLandingMode}");
     }
 }

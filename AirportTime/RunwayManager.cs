@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-public class RunwayManager
+public class RunwayManager : IRunwayProvider
 {
     private readonly List<Runway> runways = new List<Runway>();
     private readonly RunwayMaintenanceSystem maintenanceSystem;
@@ -18,6 +18,16 @@ public class RunwayManager
     {
         this.maintenanceSystem = maintenanceSystem;
         this.logger = logger;
+    }
+    
+    /// <summary>
+    /// Gets all runways managed by this RunwayManager
+    /// </summary>
+    /// <returns>A list of all available runways</returns>
+    public List<Runway> GetRunways()
+    {
+        // Return a copy of the list to prevent external modification
+        return new List<Runway>(runways);
     }
     
     /// <summary>
@@ -56,6 +66,7 @@ public class RunwayManager
         
         weatherResistance = newResistance;
     }
+    
     /// <summary>
     /// Reduces landing duration for all runways by the specified percentage
     /// </summary>
@@ -75,12 +86,12 @@ public class RunwayManager
     
         logger.Log($"[ReduceAllRunwayLandingDurations] Reduced landing duration by {reductionFactor:P0} for all runways.");
     }
+    
     /// <summary>
     /// Unlocks a <see cref="Runway"/> given a specific <see cref="RunwayTier"/>.
     /// Registers it with the <see cref="RunwayMaintenanceSystem"/> and logs the result.
     /// </summary>
-    /// <param name="tier">The tier of runway to unlock.</param>
-    /// <exception cref="ArgumentException">Thrown when an unknown tier is provided.</exception>
+    /// <param name="runway">The runway to unlock.</param>
     public void UnlockRunway(Runway runway)
     {
         var tier = runway.Tier;
@@ -89,24 +100,6 @@ public class RunwayManager
         {
             logger.Log($"[UnlockRunway] Invalid RunwayTier provided: {tier}");
             throw new ArgumentException($"Unknown runway tier: {tier}");
-        }
-
-        // Handle different runway tiers
-        switch (tier)
-        {
-            case RunwayTier.Tier1:
-                // For small runways
-                break;
-            case RunwayTier.Tier2:
-                // For medium runways
-                break;
-            case RunwayTier.Tier3:
-                // For large runways
-                break;
-            default:
-                // If you add more tiers in the future, handle them here.
-                logger.Log($"[UnlockRunway] Attempted to unlock an unhandled runway tier: {tier}");
-                throw new ArgumentException($"Unknown runway tier: {tier}");
         }
 
         // If not already unlocked, add it
@@ -121,11 +114,13 @@ public class RunwayManager
             logger.Log($"[UnlockRunway] Runway {runway.Name} was already unlocked.");
         }
     }
+    
     public bool HasRunwayOfLength(int requiredLength)
     {
         return runways.Any(r => r.Length >= requiredLength && 
                                 maintenanceSystem.GetWearLevel(r.Name) < RunwayMaintenanceSystem.FullDegradationThreshold);
     }
+    
     /// <summary>
     /// Displays info about each unlocked runway, including wear level.
     /// Logs a message if none are unlocked.
@@ -227,7 +222,7 @@ public class RunwayManager
     /// <summary>
     /// Handles landing on a runway, applying weather-resistant wear
     /// </summary>
-    public bool HandleLanding(string runwayID, Weather weather, int trafficVolume)
+    public bool HandleLanding(string runwayID, Weather weather, int trafficVolume, string flightNumber = null)
     {
         // Find the runway
         var runway = runways.FirstOrDefault(r => r.Name.Equals(runwayID));
@@ -245,8 +240,11 @@ public class RunwayManager
         }
 
         // Occupy the runway for landing
-        runway.OccupyForLanding();
-    
+        if (!string.IsNullOrEmpty(flightNumber))
+            runway.OccupyForLanding(flightNumber);
+        else
+            runway.OccupyForLanding();
+        
         // Apply wear with weather resistance applied to the weather impact
         if (weatherResistance > 0.0)
         {
@@ -266,12 +264,13 @@ public class RunwayManager
             // Apply wear normally
             maintenanceSystem.ApplyWear(runwayID, weather, trafficVolume);
         }
-    
+
         logger.Log($"[HandleLanding] Applied wear to {runwayID}. Current wear: {maintenanceSystem.GetWearLevel(runwayID)}%. " +
                    $"Runway will be occupied for {runway.LandingDuration} ticks.");
-    
+
         return true;
     }
+    
     /// <summary>
     /// Updates all runways on each tick
     /// </summary>
@@ -291,6 +290,7 @@ public class RunwayManager
             }
         }
     }
+    
     /// <summary>
     /// Gets a runway by its name
     /// </summary>
@@ -300,6 +300,7 @@ public class RunwayManager
     {
         return runways.FirstOrDefault(r => r.Name.Equals(runwayName, StringComparison.OrdinalIgnoreCase));
     }
+    
     /// <summary>
     /// Performs maintenance on all runways
     /// </summary>
@@ -330,61 +331,7 @@ public class RunwayManager
             }
         }
     }
-    /// <summary>
-
-/// <summary>
-/// Handles landing on a runway, applying weather-resistant wear
-/// </summary>
-public bool HandleLanding(string runwayID, Weather weather, int trafficVolume, string flightNumber = null)
-{
-    // Find the runway
-    var runway = runways.FirstOrDefault(r => r.Name.Equals(runwayID));
-    if (runway == null)
-    {
-        logger.Log($"[HandleLanding] Runway {runwayID} not found. Landing aborted.");
-        return false;
-    }
-
-    // Check if runway is already occupied
-    if (runway.IsOccupied)
-    {
-        logger.Log($"[HandleLanding] Runway {runwayID} is currently occupied. Landing aborted.");
-        return false;
-    }
-
-    // Occupy the runway for landing
-    if (!string.IsNullOrEmpty(flightNumber))
-        runway.OccupyForLanding(flightNumber);
-    else
-        runway.OccupyForLanding();
-    
-    // Apply wear with weather resistance applied to the weather impact
-    if (weatherResistance > 0.0)
-    {
-        // Calculate reduced weather impact
-        int originalImpact = weather.GetWeatherImpact();
-        int reducedImpact = (int)(originalImpact * (1.0 - weatherResistance));
-    
-        // Create a custom traffic volume that includes the reduced weather impact
-        int adjustedTrafficVolume = trafficVolume - (originalImpact - reducedImpact);
-    
-        logger.Log($"[HandleLanding] Weather resistance reduced impact from {originalImpact} to {reducedImpact}");
-        // Apply wear with weather resistance
-        maintenanceSystem.ApplyWear(runwayID, weather, trafficVolume, weatherResistance);        
-    }
-    else
-    {
-        // Apply wear normally
-        maintenanceSystem.ApplyWear(runwayID, weather, trafficVolume);
-    }
-
-    logger.Log($"[HandleLanding] Applied wear to {runwayID}. Current wear: {maintenanceSystem.GetWearLevel(runwayID)}%. " +
-               $"Runway will be occupied for {runway.LandingDuration} ticks.");
-
-    return true;
-    } 
-    // Add this method to the RunwayManager class
-
+ 
     /// <summary>
     /// Reduces maintenance time for all runways by the specified factor
     /// </summary>
