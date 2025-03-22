@@ -17,10 +17,18 @@ public class Airport
     public ExperienceSystem ExperienceSystem { get; }
     public AchievementSystem AchievementSystem { get; }
     
+    // New components
+    public FailureTracker FailureTracker { get; }
+    public EmergencyFlightHandler EmergencyFlightHandler { get; }
+    
     // Business services
     private readonly FlightGenerationService _flightGenerationService;
     private readonly FlightProcessingService _flightProcessingService;
     private readonly IRandomGenerator _randomGenerator;
+    
+    // Game state
+    public bool IsGameOver { get; private set; } = false;
+    public FailureType? GameOverReason { get; private set; } = null;
 
     public Airport(
         string name,
@@ -36,7 +44,9 @@ public class Airport
         FlightLandingManager landingManager,
         FlightGenerationService flightGenerationService,
         FlightProcessingService flightProcessingService,
-        IRandomGenerator randomGenerator)
+        IRandomGenerator randomGenerator,
+        FailureTracker failureTracker,
+        EmergencyFlightHandler emergencyFlightHandler)
     {
         Name = name;
         Treasury = treasury;
@@ -52,11 +62,14 @@ public class Airport
         _flightGenerationService = flightGenerationService;
         _flightProcessingService = flightProcessingService;
         _randomGenerator = randomGenerator;
+        FailureTracker = failureTracker;
+        EmergencyFlightHandler = emergencyFlightHandler;
         
         // Setup event handlers
         ExperienceSystem.OnLevelUp += HandleLevelUp;
         AchievementSystem.OnAchievementUnlocked += HandleAchievementUnlocked;
         LandingManager.OnFlightLanded += HandleFlightLanded;
+        FailureTracker.OnGameOver += HandleGameOver;
         
         // Initialize shop achievement handling
         Shop.InitializeAchievementHandling(this);
@@ -64,8 +77,17 @@ public class Airport
 
     public void Tick(int currentTick)
     {
+        // Skip processing if game is over
+        if (IsGameOver) return;
+        
+        // Process emergencies
+        EmergencyFlightHandler.ProcessEmergencies(currentTick);
+        
         // Accumulate gold at every tick
         Treasury.AccumulateGold();
+        
+        // Check for financial shortfall
+        CheckFinancialStatus();
         
         // Update runway occupation status
         RunwayManager.UpdateRunwaysStatus();
@@ -90,10 +112,27 @@ public class Airport
     {
         GameLogger.Log($"Flight {flight.FlightNumber} has been cancelled.");
         
+        // Record cancellation failure
+        FailureTracker.RecordFailure(
+            FailureType.FlightCancellation,
+            $"Flight {flight.FlightNumber} ({flight.Type}) was cancelled"
+        );
+        
         // Reset consecutive flights counter in achievement system
         AchievementSystem.ResetConsecutiveFlights();
-        
-        // Other cancellation logic...
+    }
+    
+    // Check for financial shortfall
+    private void CheckFinancialStatus()
+    {
+        // Consider it a failure if treasury goes below -5000
+        if (Treasury.GetBalance() < -5000)
+        {
+            FailureTracker.RecordFailure(
+                FailureType.FinancialShortfall,
+                $"Treasury balance fell below critical threshold: {Treasury.GetBalance():C}"
+            );
+        }
     }
 
     // Helper method to determine if it's night time based on game clock
@@ -103,6 +142,31 @@ public class Airport
         int gameHours = (currentTick % (24 * 60 / 10)) / (60 / 10);
         // Consider night time between 22:00 and 6:00
         return gameHours >= 22 || gameHours < 6;
+    }
+    
+    // Game over handler
+    private void HandleGameOver(FailureType failureType)
+    {
+        IsGameOver = true;
+        GameOverReason = failureType;
+        
+        GameLogger.Log($"🚨 GAME OVER: Too many {failureType} failures!");
+        
+        // Display game over message
+        Console.Clear();
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("\n\n");
+        Console.WriteLine(new string('=', 60));
+        Console.WriteLine($"                      GAME OVER");
+        Console.WriteLine(new string('-', 60));
+        Console.WriteLine($"Your airport management career has been terminated due to:");
+        Console.WriteLine($"\n      Too many {failureType} failures!\n");
+        Console.WriteLine($"Level reached: {ExperienceSystem.CurrentLevel}");
+        Console.WriteLine($"Final balance: {Treasury.GetBalance():C}");
+        Console.WriteLine($"Achievements unlocked: {AchievementSystem.GetUnlockedAchievements().Count}");
+        Console.WriteLine(new string('=', 60));
+        Console.WriteLine("\nPress any key to exit...");
+        Console.ResetColor();
     }
 
     #region Event Handlers
@@ -148,7 +212,6 @@ public class Airport
             simultaneousFlights
         );
     }
-
 
     private void HandleAchievementUnlocked(Achievement achievement)
     {
@@ -263,6 +326,3 @@ public class Airport
     
     #endregion
 }
-// WeatherMasterBuff.cs
-
-// NightFlightBuff.cs

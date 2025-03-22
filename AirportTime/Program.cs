@@ -22,9 +22,27 @@ namespace AirportTime
             // Setup tick event handler
             tickManager.OnTick += (currentTick) =>
             {
+                // Process game logic
                 airport.Tick(currentTick);
-                ConsoleUI.DisplayStatus(airport, currentTick);
-                inputHandler.HandleInput(currentTick);
+                
+                // Skip display if game is over
+                if (!airport.IsGameOver)
+                {
+                    ConsoleUI.DisplayStatus(airport, currentTick);
+                    inputHandler.HandleInput(currentTick);
+                }
+                else
+                {
+                    // Stop the game when game over is triggered
+                    tickManager.Pause();
+                    
+                    // Wait for key press to exit
+                    if (Console.KeyAvailable)
+                    {
+                        Console.ReadKey(true);
+                        Environment.Exit(0);
+                    }
+                }
             };
 
             // Start the simulation
@@ -33,7 +51,7 @@ namespace AirportTime
 
             airport.GameLogger.Log("Simulation started. Press 'Q' to quit.");
 
-            // Keep simulation alive until user quits
+            // Keep simulation alive until user quits or game over and exit key pressed
             while (tickManager.IsRunning() || tickManager.IsPaused())
             {
                 System.Threading.Thread.Sleep(100);

@@ -20,6 +20,10 @@ public class AirportFactory
         var experienceSystem = new ExperienceSystem(logger);
         var achievementSystem = new AchievementSystem(logger);
         
+        // Create new failure tracking components
+        var failureTracker = new FailureTracker(logger);
+        var emergencyFlightHandler = new EmergencyFlightHandler(logger, failureTracker, tickManager);
+        
         // Create flight management systems
         var flightGenerator = new FlightGenerator(randomGenerator);
         
@@ -30,7 +34,8 @@ public class AirportFactory
             logger,
             eventSystem,
             randomGenerator,
-            tickManager
+            tickManager,
+            emergencyFlightHandler
         );
         
         // Create business services
@@ -62,7 +67,9 @@ public class AirportFactory
             landingManager,
             flightGenerationService,
             flightProcessingService,
-            randomGenerator
+            randomGenerator,
+            failureTracker,
+            emergencyFlightHandler
         );
         
         return airport;

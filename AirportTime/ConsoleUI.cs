@@ -8,14 +8,22 @@
     
     public static void DisplayStatus(Airport airport, int currentTick)
     {
+        // Skip display if game is over
+        if (airport.IsGameOver) return;
+        
         Console.Clear();
         
         // Header section with airport info
         DrawHeader(airport, currentTick);
         
+        // Emergency notifications (if any)
+        DrawEmergencySection(airport, currentTick);
+        
         // XP and level progress
         DrawExperienceSection(airport);
         
+        // Failure tracker section
+        DrawFailureSection(airport);
         
         // Runway section
         DrawRunwaySection(airport);
@@ -31,6 +39,9 @@
         
         // Log section
         DrawLogSection(airport);
+        
+        // Control section
+        DrawControlSection();
     }
     
     private static void DrawHeader(Airport airport, int currentTick)
@@ -45,6 +56,33 @@
         Console.WriteLine($"│ AIRPORT MANAGER: {airport.Name,-60} Day {gameDays,3} {gameHours:D2}:{gameMinutes:D2} │");
         Console.WriteLine($"│ Time: {currentTick,5} ticks     Gold: ${airport.Treasury.GetBalance(),8:N0}     Weather: {GetWeatherInfo(airport),-11} │");
         Console.WriteLine($"│ Landing Mode: {airport.LandingManager.CurrentLandingMode,-25} Active Flights: {GetActiveFlightCount(airport),3}              │");
+        Console.WriteLine(middleBorder);
+    }
+    
+    private static void DrawEmergencySection(Airport airport, int currentTick)
+    {
+        var emergencies = airport.EmergencyFlightHandler.GetActiveEmergencies(currentTick);
+        
+        if (emergencies.Count == 0) return;
+        
+        Console.WriteLine("│ 🚨 EMERGENCY FLIGHTS REQUIRING IMMEDIATE ATTENTION                                           │");
+        
+        foreach (var (flightNumber, timeRemaining, flight) in emergencies)
+        {
+            // Show warning color for low time
+            if (timeRemaining <= 5)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+            }
+            else if (timeRemaining <= 10)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+            }
+            
+            Console.WriteLine($"│  Flight {flightNumber,-8} | {flight.Type,-10} | {flight.Priority,-10} | Response Time: {timeRemaining,3} ticks remaining  │");
+            Console.ResetColor();
+        }
+        
         Console.WriteLine(middleBorder);
     }
     
@@ -91,6 +129,63 @@
             3 => "Income Boost (Level 4)",
             4 => "Large Runway (Level 5)",
             _ => "Various Upgrades"
+        };
+    }
+    
+    private static void DrawFailureSection(Airport airport)
+    {
+        Console.WriteLine("│ FAILURES                                                                                 │");
+        
+        var failureTypes = Enum.GetValues(typeof(FailureType))
+            .Cast<FailureType>()
+            .OrderByDescending(f => airport.FailureTracker.GetFailurePercentage(f));
+            
+        // Get the top 3 most critical failures
+        var topFailures = failureTypes.Take(3).ToList();
+        
+        if (topFailures.Count == 0)
+        {
+            Console.WriteLine("│  No failures recorded.                                                                     │");
+            Console.WriteLine("│                                                                                          │");
+            Console.WriteLine("│                                                                                          │");
+        }
+        else
+        {
+            foreach (var failureType in topFailures)
+            {
+                int count = airport.FailureTracker.GetFailureCount(failureType);
+                int threshold = airport.FailureTracker.GetFailureThreshold(failureType);
+                int percentage = airport.FailureTracker.GetFailurePercentage(failureType);
+                
+                // Set color based on failure percentage
+                if (percentage >= 75)
+                    Console.ForegroundColor = ConsoleColor.Red;
+                else if (percentage >= 50)
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    
+                Console.WriteLine($"│  {failureType,-20} | Count: {count,2}/{threshold,-2} | Danger Level: {GetDangerLevel(percentage),-12} │");
+                Console.ResetColor();
+            }
+            
+            // Fill empty lines if needed
+            for (int i = 0; i < 3 - topFailures.Count; i++)
+            {
+                Console.WriteLine("│                                                                                          │");
+            }
+        }
+        
+        Console.WriteLine(middleBorder);
+    }
+    
+    private static string GetDangerLevel(int percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => "CRITICAL",
+            >= 75 => "High",
+            >= 50 => "Moderate",
+            >= 25 => "Low",
+            _ => "Minimal"
         };
     }
     
@@ -267,7 +362,16 @@ private static string DetermineRunwayType(Runway runway)
             {
                 var flight = upcomingFlights[i];
                 string flightStatus = flight.Status.ToString();
+                
+                // Highlight emergency flights
+                bool isEmergency = flight.Priority == FlightPriority.Emergency || flight.Type == FlightType.Emergency;
+                if (isEmergency)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                }
+                
                 string statusColor = flightStatus == "Delayed" ? "!" : " ";
+                statusColor = isEmergency ? "⚠️" : statusColor;
                 
                 // Calculate estimated revenue (this is a rough estimate)
                 double baseRevenue = flight.Passengers * 10;
@@ -281,6 +385,11 @@ private static string DetermineRunwayType(Runway runway)
                 };
                 
                 Console.WriteLine($"│ {statusColor}{flight.FlightNumber,-8} | {flight.Type,-10} | {flight.Priority,-10} | {flight.Plane.Size,-7} | {flight.Passengers,8} pax | T{flight.ScheduledLandingTime,6} | ${estRevenue,7:N0} | {flightStatus} │");
+                
+                if (isEmergency)
+                {
+                    Console.ResetColor();
+                }
             }
             
             if (upcomingFlights.Count > displayCount)
