@@ -17,8 +17,8 @@
         CurrentTier = RunwayTier.Tier2;
     }
 
-    public void OnPurchase(Airport airport)
+    public override void OnPurchase(Airport airport)
     {
-        airport.RunwayManager.UnlockRunway((Runway)this);
+        airport.RunwayManager.UnlockRunway(this);
     }
 }

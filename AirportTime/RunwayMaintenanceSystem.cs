@@ -29,12 +29,12 @@
             // Calculate base wear
             int wearIncrease = WearIncrementPerLanding + new Random().Next(1,7) + (trafficVolume / 10);
         
-            // Calculate weather impact with resistance
-            int weatherImpact = weather.GetWeatherImpact();
-            int resistantWeatherImpact = (int)(weatherImpact * (1.0 - weatherResistanceFactor));
+            // // Calculate weather impact with resistance
+            // int weatherImpact = weather.GetWeatherImpact();
+            // int resistantWeatherImpact = (int)(weatherImpact * (1.0 - weatherResistanceFactor));
         
             // Calculate total wear
-            int totalWear = wearIncrease + resistantWeatherImpact * WeatherImpactMultiplier;
+            int totalWear = wearIncrease;
 
             // Apply the wear
             runway.ApplyWear(totalWear);

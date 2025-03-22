@@ -150,9 +150,14 @@ private void UnlockFeaturesForLevel(int level)
         case 3:
             // Add a revenue modifier for higher airport reputation
             ModifierManager.AddModifier("High Airport Reputation", 1.25);
+            RunwayManager.ReduceAllRunwayLandingDurations(0.96);
             GameLogger.Log("Reputation Bonus: All flights now generate 25% more revenue!");
             break;
-                
+        case 4:
+        case 5:
+        case 6:
+            RunwayManager.ReduceAllRunwayLandingDurations(0.96);
+            break;
         case 7:
             // Add a weather resistance modifier
             RunwayManager.AddWeatherResistance(0.3);

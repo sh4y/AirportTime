@@ -25,14 +25,16 @@ public class Shop
     {
         // Use the RunwayTier enum for clarity.
         AddItemToShop(new SmallRunway(nextItemId++, "Small Runway", 100, "Basic runway suitable for small aircraft"));
-        AddItemToShop(new SmallRunway(nextItemId++,"Small Runway2", 3000, "Basic runway suitable for small aircraft"));
+        AddItemToShop(new SmallRunway(nextItemId++,"Small Runway2", 1000, "Basic runway suitable for small aircraft"));
         
         // Queue items for future levels instead of directly adding thems1
-        
-        QueueItemForLevel(new MediumRunway(nextItemId++,"Medium Runway", 100000, "Capable of handling medium aircraft"), 3);
         QueueItemForLevel(new RunwayBuff(nextItemId++,"Runway Speed Upgrade", "Increases runway speed by 10%", 10000, 
             BuffType.LandingDurationReduction, 0.9), 2);
-        QueueItemForLevel(new LargeRunway(nextItemId++,"Large Runway", 5000000, "Capable of handling large aircraft"), 5);
+        QueueItemForLevel(new MediumRunway(nextItemId++,"Medium Runway", 10000, "Capable of handling medium aircraft"), 5);
+        QueueItemForLevel(new SmallRunway(nextItemId++,"Small Runway3", 250000, "Capable of handling small aircraft"), 6);
+        QueueItemForLevel(new MediumRunway(nextItemId++,"Medium Runway2", 500000, "Capable of handling medium aircraft"), 8);
+        QueueItemForLevel(new LargeRunway(nextItemId++,"Large Runway", 1000000, "Capable of handling large aircraft"), 9);
+
     }
 
     /// <summary>

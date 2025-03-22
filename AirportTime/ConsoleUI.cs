@@ -141,100 +141,110 @@
         Console.WriteLine(middleBorder);
     }
     
-    private static void DrawRunwaySection(Airport airport)
+private static void DrawRunwaySection(Airport airport)
+{
+    Console.WriteLine("│ RUNWAYS                                                                                  │");
+    Console.WriteLine("│  ID              | Type            | Length  | Wear  | Status                            │");
+    Console.WriteLine("│ -----------------+-----------------+---------+-------+----------------------------------- │");
+    
+    // Get runways count
+    var runwayManager = airport.RunwayManager;
+    var runwayCount = runwayManager.GetRunwayCount();
+    
+    if (runwayCount == 0)
     {
-        Console.WriteLine("│ RUNWAYS                                                                                  │");
-        Console.WriteLine("│  ID              | Type            | Length  | Wear  | Status                            │");
-        Console.WriteLine("│ -----------------+-----------------+---------+-------+----------------------------------- │");
+        Console.WriteLine("│  No runways available. Visit the shop to purchase runways.                               │");
+        Console.WriteLine("│                                                                                          │");
+        Console.WriteLine("│                                                                                          │");
+    }
+    else
+    {
+        // Get all runways from reflection
+        var runways = GetAllRunways(runwayManager);
+        var smallPlane = new Plane("DUMMY1", PlaneSize.Small, 20000);
+        var availableRunways = runwayManager.GetAvailableRunways(smallPlane)
+            .Select(r => r.Name)
+            .ToHashSet();
         
-        // Get runways count
-        var runwayCount = airport.RunwayManager.GetRunwayCount();
-        
-        if (runwayCount == 0)
+        // Display all runways dynamically
+        foreach (var runway in runways)
         {
-            Console.WriteLine("│  No runways available. Visit the shop to purchase runways.                               │");
-            Console.WriteLine("│                                                                                          │");
-            Console.WriteLine("│                                                                                          │");
-        }
-        else
-        {
-            // Create dummy planes to check runway availability
-            var smallPlane = new Plane("DUMMY1", PlaneSize.Small, 20000);
-            var availableRunways = airport.RunwayManager.GetAvailableRunways(smallPlane)
-                .Select(r => r.Name)
-                .ToHashSet();
+            string runwayType = DetermineRunwayType(runway);
+            int wear = runwayManager.GetMaintenanceSystem().GetWearLevel(runway.Name);
             
-            // Display runways we know exist
-            if (runwayCount > 0)
-            {
-                var runway = "Small Runway";
-                int wear = airport.RunwayManager.GetMaintenanceSystem().GetWearLevel(runway);
-                
-                // Check if GetRunwayByName exists, otherwise fallback to basic status
-                string status;
-                try {
-                    var runwayObj = airport.RunwayManager.GetRunwayByName(runway);
-                    status = runwayObj != null 
-                        ? runwayObj.GetDetailedOccupationStatus() 
-                        : (availableRunways.Contains(runway) ? "AVAILABLE" : "OCCUPIED");
-                } catch {
-                    status = availableRunways.Contains(runway) ? "AVAILABLE" : "OCCUPIED";
-                }
-                
-                string wearIndicator = wear >= 80 ? "⚠️" : (wear >= 50 ? "!" : " ");
-                Console.WriteLine($"│  {runway,-15} | {"Small",-15} | {5000,5}m  | {wearIndicator}{wear,2}%   | {status,-32} │");
+            // Get runway status
+            string status;
+            try {
+                status = runway.GetDetailedOccupationStatus();
+            } catch {
+                status = availableRunways.Contains(runway.Name) ? "AVAILABLE" : "OCCUPIED";
             }
             
-            if (runwayCount > 1)
-            {
-                var runway = "Small Runway2";
-                int wear = airport.RunwayManager.GetMaintenanceSystem().GetWearLevel(runway);
-                
-                // Check if GetRunwayByName exists, otherwise fallback to basic status
-                string status;
-                try {
-                    var runwayObj = airport.RunwayManager.GetRunwayByName(runway);
-                    status = runwayObj != null 
-                        ? runwayObj.GetDetailedOccupationStatus() 
-                        : (availableRunways.Contains(runway) ? "AVAILABLE" : "OCCUPIED");
-                } catch {
-                    status = availableRunways.Contains(runway) ? "AVAILABLE" : "OCCUPIED";
-                }
-                
-                string wearIndicator = wear >= 80 ? "⚠️" : (wear >= 50 ? "!" : " ");
-                Console.WriteLine($"│  {runway,-15} | {"Small",-15} | {5000,5}m  | {wearIndicator}{wear,2}%   | {status,-32} │");
-            }
-            
-            if (runwayCount > 2)
-            {
-                var runway = "Medium Runway";
-                int wear = airport.RunwayManager.GetMaintenanceSystem().GetWearLevel(runway);
-                
-                // Check if GetRunwayByName exists, otherwise fallback to basic status
-                string status;
-                try {
-                    var runwayObj = airport.RunwayManager.GetRunwayByName(runway);
-                    status = runwayObj != null 
-                        ? runwayObj.GetDetailedOccupationStatus() 
-                        : (availableRunways.Contains(runway) ? "AVAILABLE" : "OCCUPIED");
-                } catch {
-                    status = availableRunways.Contains(runway) ? "AVAILABLE" : "OCCUPIED";
-                }
-                
-                string wearIndicator = wear >= 80 ? "⚠️" : (wear >= 50 ? "!" : " ");
-                Console.WriteLine($"│  {runway,-15} | {"Medium",-15} | {7500,5}m  | {wearIndicator}{wear,2}%   | {status,-32} │");
-            }
-            
-            // Fill empty lines if fewer than 3 runways
-            for (int i = 0; i < 3 - runwayCount; i++)
-            {
-                Console.WriteLine("│                                                                                          │");
-            }
+            string wearIndicator = wear >= 80 ? "⚠️" : (wear >= 50 ? "!" : " ");
+            Console.WriteLine($"│  {runway.Name,-15} | {runwayType,-15} | {runway.Length,5}m  | {wearIndicator}{wear,2}%   | {status,-32} │");
         }
         
-        Console.WriteLine(middleBorder);
+        // Fill empty lines if needed
+        for (int i = 0; i < Math.Max(0, 3 - runways.Count); i++)
+        {
+            Console.WriteLine("│                                                                                          │");
+        }
     }
     
+    Console.WriteLine(middleBorder);
+}
+
+private static List<Runway> GetAllRunways(RunwayManager runwayManager)
+{
+    var runways = new List<Runway>();
+    
+    // Try to access runways through reflection
+    try
+    {
+        var fieldInfo = typeof(RunwayManager).GetField("runways", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        if (fieldInfo != null)
+        {
+            var runwaysList = fieldInfo.GetValue(runwayManager) as List<Runway>;
+            if (runwaysList != null)
+            {
+                runways.AddRange(runwaysList);
+            }
+        }
+    }
+    catch
+    {
+        // Fallback to known runway names if reflection fails
+        string[] knownRunways = { "Small Runway", "Small Runway2", "Medium Runway", "Large Runway" };
+        foreach (var name in knownRunways)
+        {
+            var runway = runwayManager.GetRunwayByName(name);
+            if (runway != null)
+            {
+                runways.Add(runway);
+            }
+        }
+    }
+    
+    return runways;
+}
+
+private static string DetermineRunwayType(Runway runway)
+{
+    // Determine runway type based on length or class
+    if (runway is SmallRunway) return "Small";
+    if (runway is MediumRunway) return "Medium";
+    if (runway is LargeRunway) return "Large";
+    
+    // Fallback to length-based determination
+    return runway.Length switch
+    {
+        <= 5000 => "Small",
+        <= 7500 => "Medium",
+        _ => "Large"
+    };
+}    
     private static void DrawFlightSection(Airport airport)
     {
         Console.WriteLine("│ UPCOMING FLIGHTS                                                                         │");
