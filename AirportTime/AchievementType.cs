@@ -6,5 +6,6 @@ public enum AchievementType
     FlightTypeSpecialization,
     PerfectLandings,
     WeatherMaster,
-    RunwayExpert
+    RunwayExpert,
+    PassengerMilestone
 }

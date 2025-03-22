@@ -41,14 +41,38 @@ public class Shop
     public void InitializeAchievementHandling(Airport airport)
     {
         if (airport == null) return;
-        
+    
         airport.AchievementSystem.OnAchievementUnlocked += (achievement) => 
         {
-            if (achievement.Type == AchievementType.FlightTypeSpecialization)
+            // Get the next item ID
+            int itemId = GetNextItemId();
+            IPurchasable buff = null;
+        
+            // Create the appropriate buff based on achievement type
+            switch (achievement.Type)
             {
-                var buff = FlightSpecializationBuff.FromAchievement(achievement, GetNextItemId());
+                case AchievementType.FlightTypeSpecialization:
+                    buff = FlightSpecializationBuff.FromAchievement(achievement, itemId);
+                    break;
+                
+                case AchievementType.PerfectLandings:
+                    buff = XPBuff.FromAchievement(achievement, itemId);
+                    break;
+                
+                case AchievementType.RunwayExpert:
+                    buff = RunwayMaintenanceBuff.FromAchievement(achievement, itemId);
+                    break;
+                
+                case AchievementType.PassengerMilestone:
+                    buff = GoldIncomeBuff.FromAchievement(achievement, itemId);
+                    break;
+            }
+        
+            // Add the buff to the shop if one was created
+            if (buff != null)
+            {
                 AddItemToShop(buff);
-                logger.Log($"New specialization buff added to shop: {buff.Name} - {buff.Description} - Price: {buff.Price:C}");
+                logger.Log($"New achievement buff added to shop: {buff.Name} - {buff.Description} - Price: {buff.Price:C}");
             }
         };
     }
@@ -301,9 +325,6 @@ public class Shop
     /// </summary>
     public int GetNextItemId()
     {
-        if (itemsForSale.Count == 0)
-            return 1;
-            
-        return itemsForSale.Max(item => item.Id) + 1;
+        return ++nextItemId;
     }
 }

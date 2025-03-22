@@ -41,6 +41,9 @@
         
         // We'll set the LandingManager after TickManager is available
         LandingManager = null;
+        
+        Shop.InitializeAchievementHandling(this);
+
     }
 
     // Method to set the LandingManager after TickManager is available
@@ -101,37 +104,76 @@
         activeFlights.AddRange(FlightScheduler.GetUnlandedFlights());
     }
     
-    private void HandleFlightLanded(Flight flight, Runway runway, bool isOnTime, int currentTick)
-    {
-        // Get the current weather from our instance
-        Weather weather = new Weather(RandomGenerator);
-        
-        // Get the runway wear level
-        int runwayWear = RunwayManager.GetMaintenanceSystem().GetWearLevel(runway.Name);
-        
-        // Check if this was a perfect landing (no delays)
-        bool perfectLanding = !flight.IsDelayed() && isOnTime;
-        
-        // Count how many flights are active (for simultaneous flight bonus)
-        int simultaneousFlights = Math.Max(0, activeFlights.Count - 1); // Subtract 1 for the current flight
-        
-        // Calculate XP for this landing
-        int xpEarned = ExperienceSystem.CalculateFlightXP(
-            flight, 
-            weather, 
-            runwayWear, 
-            isOnTime, 
-            perfectLanding, 
-            simultaneousFlights
-        );
-        
-        // Add the earned XP to our experience system
-        ExperienceSystem.AddExperience(xpEarned);
-        
-        // Record the flight in the achievement system
-        AchievementSystem.RecordFlightLanded(flight);
-    } 
+// Update HandleFlightLanded method in the Airport class
+private void HandleFlightLanded(Flight flight, Runway runway, bool isOnTime, int currentTick)
+{
+    // Get the current weather from our instance
+    Weather weather = new Weather(RandomGenerator);
     
+    // Get the runway wear level
+    int runwayWear = RunwayManager.GetMaintenanceSystem().GetWearLevel(runway.Name);
+    
+    // Check if this was a perfect landing (no delays)
+    bool perfectLanding = !flight.IsDelayed() && isOnTime;
+    
+    // Count how many flights are active (for simultaneous flight bonus)
+    int simultaneousFlights = Math.Max(0, activeFlights.Count - 1); // Subtract 1 for the current flight
+    
+    // Calculate XP for this landing
+    int xpEarned = ExperienceSystem.CalculateFlightXP(
+        flight, 
+        weather, 
+        runwayWear, 
+        isOnTime, 
+        perfectLanding, 
+        simultaneousFlights
+    );
+    
+    // Add the earned XP to our experience system
+    ExperienceSystem.AddExperience(xpEarned);
+    
+    // Record the flight in the achievement system with perfect landing status and runway wear
+    AchievementSystem.RecordFlightLanded(flight, perfectLanding, runwayWear);
+}
+
+// Update HandleAchievementUnlocked method in the Airport class
+private void HandleAchievementUnlocked(Achievement achievement)
+{
+    // Process the achievement
+    GameLogger.Log($"Achievement unlocked: {achievement.Name}");
+    
+    // Get the next item ID
+    int nextItemId = Shop.GetNextItemId();
+    
+    // Check achievement type and create appropriate buff
+    IPurchasable buff = null;
+    
+    switch (achievement.Type)
+    {
+        case AchievementType.FlightTypeSpecialization:
+            buff = FlightSpecializationBuff.FromAchievement(achievement, nextItemId);
+            break;
+            
+        case AchievementType.PerfectLandings:
+            buff = XPBuff.FromAchievement(achievement, nextItemId);
+            break;
+            
+        case AchievementType.RunwayExpert:
+            buff = RunwayMaintenanceBuff.FromAchievement(achievement, nextItemId);
+            break;
+            
+        case AchievementType.PassengerMilestone:
+            buff = GoldIncomeBuff.FromAchievement(achievement, nextItemId);
+            break;
+    }
+    
+    // Add the buff to the shop if one was created
+    if (buff != null)
+    {
+        Shop.AddItemToShop(buff);
+        GameLogger.Log($"New item added to shop: {buff.Name} - {buff.Description} - Price: {buff.Price:C}");
+    }
+}
 private void HandleLevelUp(int newLevel)
 {
     // Give a gold bonus for leveling up
@@ -149,26 +191,7 @@ private void HandleLevelUp(int newLevel)
     UnlockFeaturesForLevel(newLevel);
 }
 
-private void HandleAchievementUnlocked(Achievement achievement)
-{
-    // Process the achievement
-    GameLogger.Log($"Achievement unlocked: {achievement.Name}");
-    
-    // Check if it's a flight specialization achievement
-    if (achievement.Type == AchievementType.FlightTypeSpecialization)
-    {
-        // Get the next item ID
-        int nextItemId = Shop.GetNextItemId();
-        
-        // Create a buff from the achievement
-        var buff = FlightSpecializationBuff.FromAchievement(achievement, nextItemId);
-        
-        // Add the buff to the shop
-        Shop.AddItemToShop(buff);
-        
-        GameLogger.Log($"New item added to shop: {buff.Name} - {buff.Description} - Price: {buff.Price:C}");
-    }
-}
+
 
 private void UnlockFeaturesForLevel(int level)
 {

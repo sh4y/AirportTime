@@ -382,5 +382,29 @@ public bool HandleLanding(string runwayID, Weather weather, int trafficVolume, s
                $"Runway will be occupied for {runway.LandingDuration} ticks.");
 
     return true;
-}
+    } 
+    // Add this method to the RunwayManager class
+
+    /// <summary>
+    /// Reduces maintenance time for all runways by the specified factor
+    /// </summary>
+    /// <param name="reductionFactor">Factor to multiply current duration by (0.0-1.0)</param>
+    public void ReduceMaintenanceTime(double reductionFactor)
+    {
+        if (runways.Count == 0)
+        {
+            logger.Log("[ReduceMaintenanceTime] No runways available to modify.");
+            return;
+        }
+
+        foreach (var runway in runways)
+        {
+            int originalDuration = runway.RepairDuaration;
+            runway.RepairDuaration = Math.Max(1, (int)(runway.RepairDuaration * reductionFactor));
+        
+            logger.Log($"[ReduceMaintenanceTime] Runway {runway.Name} repair duration reduced from {originalDuration} to {runway.RepairDuaration} ticks");
+        }
+    
+        logger.Log($"[ReduceMaintenanceTime] Reduced repair duration by {(1.0 - reductionFactor) * 100:F0}% for all runways");
+    }
 }
