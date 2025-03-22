@@ -1,9 +1,9 @@
 public class ShopPurchaseHandler
 {
-    private readonly Treasury treasury;
+    private readonly ITreasury treasury;
     private readonly GameLogger logger;
 
-    public ShopPurchaseHandler(Treasury treasury, GameLogger logger)
+    public ShopPurchaseHandler(ITreasury treasury, GameLogger logger)
     {
         this.treasury = treasury;
         this.logger = logger;

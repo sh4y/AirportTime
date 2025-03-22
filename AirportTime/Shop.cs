@@ -1,8 +1,8 @@
 ﻿
 // The refactored Shop class that uses the components
-public class Shop
+public class Shop : IShop
 {
-    private readonly Treasury treasury;
+    private readonly ITreasury treasury;
     private readonly GameLogger logger;
     
     // The components
@@ -11,7 +11,7 @@ public class Shop
     private readonly ShopLevelManager levelManager;
     private readonly AchievementShopHandler achievementHandler;
 
-    public Shop(Treasury treasury, GameLogger logger)
+    public Shop(ITreasury treasury, GameLogger logger)
     {
         this.treasury = treasury;
         this.logger = logger;

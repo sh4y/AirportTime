@@ -1,4 +1,4 @@
-public class FlightProcessingService
+public class FlightProcessingService : IFlightProcessingService
 {
     private readonly FlightScheduler _flightScheduler;
     private readonly FlightLandingManager _landingManager;

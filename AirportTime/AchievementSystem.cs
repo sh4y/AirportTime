@@ -1,6 +1,6 @@
 
 // AchievementSystem.cs
-public class AchievementSystem
+public class AchievementSystem : IAchievementSystem
 {
     private readonly Dictionary<string, int> flightTypeCounter = new Dictionary<string, int>();
     private readonly Dictionary<string, bool> unlockedAchievements = new Dictionary<string, bool>();

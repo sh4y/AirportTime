@@ -5,11 +5,11 @@ using System.Linq;
 /// <summary>
 /// Handles emergency flights and tracks response deadlines
 /// </summary>
-public class EmergencyFlightHandler
+public class EmergencyFlightHandler : IEmergencyFlightHandler
 {
     private readonly GameLogger logger;
     private readonly FailureTracker failureTracker;
-    private readonly TickManager tickManager;
+    private readonly ITickManager tickManager;
     
     // Track active emergency flights with their deadlines
     private Dictionary<string, (Flight flight, int tickDetected, int responseDeadline)> activeEmergencyFlights = 
@@ -17,7 +17,7 @@ public class EmergencyFlightHandler
     
     private readonly int emergencyResponseWindow = 20; // Ticks to respond
     
-    public EmergencyFlightHandler(GameLogger logger, FailureTracker failureTracker, TickManager tickManager)
+    public EmergencyFlightHandler(GameLogger logger, FailureTracker failureTracker, ITickManager tickManager)
     {
         this.logger = logger;
         this.failureTracker = failureTracker;

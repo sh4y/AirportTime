@@ -1,4 +1,4 @@
-﻿public class FlightGenerator
+﻿public class FlightGenerator 
 {
     private readonly IRandomGenerator randomGenerator;
     private readonly FlightSpawnProfile spawnProfile;

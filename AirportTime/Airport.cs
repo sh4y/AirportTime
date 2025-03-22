@@ -1,52 +1,57 @@
-﻿// Airport.cs
+﻿/// <summary>
+/// Main airport class that coordinates all game systems
+/// </summary>
 public class Airport
 {
     public string Name { get; }
     
     // Core services
-    public Treasury Treasury { get; }
-    public RunwayManager RunwayManager { get; }
-    public Shop Shop { get; }
-    public GameLogger GameLogger { get; }
+    public ITreasury Treasury { get; }
+    public IRunwayManager RunwayManager { get; }
+    public IShop Shop { get; }
+    public IGameLogger GameLogger { get; }
     
     // Game systems
-    public FlightScheduler FlightScheduler { get; }
-    public EventSystem EventSystem { get; }
-    public ModifierManager ModifierManager { get; }
-    public FlightLandingManager LandingManager { get; }
-    public ExperienceSystem ExperienceSystem { get; }
-    public AchievementSystem AchievementSystem { get; }
+    public IFlightScheduler FlightScheduler { get; }
+    public IEventSystem EventSystem { get; }
+    public IModifierManager ModifierManager { get; }
+    public IFlightLandingManager LandingManager { get; }
+    public IExperienceSystem ExperienceSystem { get; }
+    public IAchievementSystem AchievementSystem { get; }
     
     // New components
-    public FailureTracker FailureTracker { get; }
-    public EmergencyFlightHandler EmergencyFlightHandler { get; }
+    public IFailureTracker FailureTracker { get; }
+    public IEmergencyFlightHandler EmergencyFlightHandler { get; }
     
     // Business services
-    private readonly FlightGenerationService _flightGenerationService;
-    private readonly FlightProcessingService _flightProcessingService;
+    private readonly IFlightGenerationService _flightGenerationService;
+    private readonly IFlightProcessingService _flightProcessingService;
     private readonly IRandomGenerator _randomGenerator;
     
     // Game state
     public bool IsGameOver { get; private set; } = false;
     public FailureType? GameOverReason { get; private set; } = null;
 
+    /// <summary>
+    /// Creates a new Airport instance with all dependencies
+    /// </summary>
     public Airport(
         string name,
-        Treasury treasury,
-        RunwayManager runwayManager,
-        Shop shop,
-        FlightScheduler flightScheduler,
-        EventSystem eventSystem,
-        GameLogger gameLogger,
-        ModifierManager modifierManager,
-        ExperienceSystem experienceSystem,
-        AchievementSystem achievementSystem,
-        FlightLandingManager landingManager,
-        FlightGenerationService flightGenerationService,
-        FlightProcessingService flightProcessingService,
+        ITreasury treasury,
+        IRunwayManager runwayManager,
+        IShop shop,
+        IFlightScheduler flightScheduler,
+        IEventSystem eventSystem,
+        IGameLogger gameLogger,
+        IModifierManager modifierManager,
+        IExperienceSystem experienceSystem,
+        IAchievementSystem achievementSystem,
+        IFlightLandingManager landingManager,
+        IFlightGenerationService flightGenerationService,
+        IFlightProcessingService flightProcessingService,
         IRandomGenerator randomGenerator,
-        FailureTracker failureTracker,
-        EmergencyFlightHandler emergencyFlightHandler)
+        IFailureTracker failureTracker,
+        IEmergencyFlightHandler emergencyFlightHandler)
     {
         Name = name;
         Treasury = treasury;
@@ -75,6 +80,10 @@ public class Airport
         Shop.InitializeAchievementHandling(this);
     }
 
+    /// <summary>
+    /// Updates the airport state for the current tick
+    /// </summary>
+    /// <param name="currentTick">Current game tick</param>
     public void Tick(int currentTick)
     {
         // Skip processing if game is over
@@ -102,12 +111,18 @@ public class Airport
         _flightGenerationService.GenerateFlightsIfNeeded(currentTick);
     }
 
+    /// <summary>
+    /// Toggles between automatic and manual landing modes
+    /// </summary>
     public void ToggleLandingMode()
     {
         LandingManager.ToggleLandingMode();
     }
 
-    // Handle a flight cancellation
+    /// <summary>
+    /// Handles a flight cancellation
+    /// </summary>
+    /// <param name="flight">The cancelled flight</param>
     public void HandleFlightCancelled(Flight flight)
     {
         GameLogger.Log($"Flight {flight.FlightNumber} has been cancelled.");
@@ -122,7 +137,9 @@ public class Airport
         AchievementSystem.ResetConsecutiveFlights();
     }
     
-    // Check for financial shortfall
+    /// <summary>
+    /// Checks for financial shortfall
+    /// </summary>
     private void CheckFinancialStatus()
     {
         // Consider it a failure if treasury goes below -5000
@@ -135,7 +152,11 @@ public class Airport
         }
     }
 
-    // Helper method to determine if it's night time based on game clock
+    /// <summary>
+    /// Helper method to determine if it's night time based on game clock
+    /// </summary>
+    /// <param name="currentTick">Current game tick</param>
+    /// <returns>True if it's night time</returns>
     private bool IsNightTime(int currentTick)
     {
         // Game time (10 minutes per tick as an example)
@@ -144,7 +165,9 @@ public class Airport
         return gameHours >= 22 || gameHours < 6;
     }
     
-    // Game over handler
+    /// <summary>
+    /// Game over handler
+    /// </summary>
     private void HandleGameOver(FailureType failureType)
     {
         IsGameOver = true;
@@ -171,7 +194,9 @@ public class Airport
 
     #region Event Handlers
     
-    // In Airport.cs, update HandleFlightLanded:
+    /// <summary>
+    /// Handles flight landing events
+    /// </summary>
     private void HandleFlightLanded(Flight flight, Runway runway, bool isOnTime, int currentTick)
     {
         // Get the current weather
@@ -213,6 +238,9 @@ public class Airport
         );
     }
 
+    /// <summary>
+    /// Handles achievement unlocked events
+    /// </summary>
     private void HandleAchievementUnlocked(Achievement achievement)
     {
         GameLogger.Log($"Achievement unlocked: {achievement.Name}");
@@ -266,6 +294,9 @@ public class Airport
         }
     }
     
+    /// <summary>
+    /// Handles level up events
+    /// </summary>
     private void HandleLevelUp(int newLevel)
     {
         // Give a gold bonus for leveling up
@@ -283,6 +314,9 @@ public class Airport
         UnlockFeaturesForLevel(newLevel);
     }
     
+    /// <summary>
+    /// Unlocks features based on level
+    /// </summary>
     private void UnlockFeaturesForLevel(int level)
     {
         switch (level)

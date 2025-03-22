@@ -2,32 +2,73 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>
-/// Controller that mediates between the Airport model and the UI view.
-/// This class gathers all the necessary data from the Airport and its subsystems
-/// and passes it to the view for display.
+/// Interface for the airport view controller
 /// </summary>
-public class AirportViewController
+public interface IAirportViewController
 {
-    private readonly IAirportView view;
-    private readonly GameMetrics metrics;
+    /// <summary>
+    /// Updates the view with the current state of the airport
+    /// </summary>
+    /// <param name="currentTick">Current game tick</param>
+    void UpdateView(int currentTick);
     
     /// <summary>
-    /// Creates a new controller with the given view and airport
+    /// Prompts the user to select a runway for a flight
+    /// </summary>
+    /// <param name="flight">The flight requiring landing</param>
+    /// <param name="availableRunways">Available runways</param>
+    /// <returns>Selected runway or null</returns>
+    Runway PromptRunwaySelection(Flight flight, List<Runway> availableRunways);
+    
+    /// <summary>
+    /// Shows a notification message to the user
+    /// </summary>
+    /// <param name="message">The message to show</param>
+    /// <param name="isImportant">Whether the message is important</param>
+    void ShowNotification(string message, bool isImportant = false);
+}
+
+/// <summary>
+/// Controller that mediates between the Airport model and the UI view
+/// using dependency injection.
+/// </summary>
+public class AirportViewController : IAirportViewController
+{
+    private readonly IAirportView view;
+    private readonly Airport airport;
+    private readonly IGameMetricsProvider metricsProvider;
+    
+    /// <summary>
+    /// Creates a new controller with the given dependencies
+    /// </summary>
+    /// <param name="view">The view implementation to use</param>
+    /// <param name="airport">The airport to display</param>
+    /// <param name="metricsProvider">The metrics provider</param>
+    public AirportViewController(
+        IAirportView view, 
+        Airport airport, 
+        IGameMetricsProvider metricsProvider)
+    {
+        this.view = view ?? throw new ArgumentNullException(nameof(view));
+        this.airport = airport ?? throw new ArgumentNullException(nameof(airport));
+        this.metricsProvider = metricsProvider ?? throw new ArgumentNullException(nameof(metricsProvider));
+    }
+    
+    /// <summary>
+    /// Alternative constructor that creates its own metrics provider
     /// </summary>
     /// <param name="view">The view implementation to use</param>
     /// <param name="airport">The airport to display</param>
     public AirportViewController(IAirportView view, Airport airport)
+        : this(view, airport, new GameMetricsProvider(airport, airport.GameLogger))
     {
-        this.view = view;
-        this.metrics = new GameMetrics(airport, airport.GameLogger);
     }
     
     /// <summary>
     /// Updates the view with the current state of the airport
     /// </summary>
-    /// <param name="airport">The airport to display</param>
-    /// <param name="currentTick">The current game tick</param>
-    public void UpdateView(Airport airport, int currentTick)
+    /// <param name="currentTick">Current game tick</param>
+    public void UpdateView(int currentTick)
     {
         // Skip if game is over
         if (airport.IsGameOver) return;
@@ -36,23 +77,23 @@ public class AirportViewController
         view.ClearDisplay();
         
         // Update the view in sequence
-        UpdateHeader(airport, currentTick);
-        UpdateEmergencies(airport, currentTick);
-        UpdateMainContent(airport, currentTick);
+        UpdateHeader(currentTick);
+        UpdateEmergencies(currentTick);
+        UpdateMainContent(currentTick);
         view.DisplayControls();
     }
     
     /// <summary>
     /// Updates the header section of the view
     /// </summary>
-    private void UpdateHeader(Airport airport, int currentTick)
+    private void UpdateHeader(int currentTick)
     {
-        var airportInfo = metrics.AirportMetrics;
-        var timeInfo = metrics.AirportMetrics.GetTimeInfo(currentTick);
+        var airportInfo = metricsProvider.GetAirportMetrics();
+        var timeInfo = metricsProvider.GetTimeInfo(currentTick);
         
         // Update header and landing info
         view.UpdateHeaderInfo(
-            airportInfo.Name,
+            airport.Name,
             timeInfo,
             airportInfo.GoldBalance,
             airportInfo.GetWeatherInfo());
@@ -65,9 +106,9 @@ public class AirportViewController
     /// <summary>
     /// Updates the emergency section of the view if needed
     /// </summary>
-    private void UpdateEmergencies(Airport airport, int currentTick)
+    private void UpdateEmergencies(int currentTick)
     {
-        var emergencies = metrics.EmergencyMetrics.GetActiveEmergencies(currentTick);
+        var emergencies = metricsProvider.GetEmergencyMetrics().GetActiveEmergencies(currentTick);
         if (emergencies.Count > 0)
         {
             view.DisplayEmergencies(emergencies, currentTick);
@@ -77,10 +118,10 @@ public class AirportViewController
     /// <summary>
     /// Updates the main content of the view
     /// </summary>
-    private void UpdateMainContent(Airport airport, int currentTick)
+    private void UpdateMainContent(int currentTick)
     {
         // Experience and flight section
-        var xpMetrics = metrics.ExperienceMetrics;
+        var xpMetrics = metricsProvider.GetExperienceMetrics();
         view.UpdateExperienceDisplay(
             xpMetrics.CurrentLevel,
             xpMetrics.CurrentXP,
@@ -91,36 +132,26 @@ public class AirportViewController
             xpMetrics.GetNextUnlock());
             
         view.DisplayUpcomingFlights(
-            metrics.FlightMetrics.GetUpcomingFlights(4));
+            metricsProvider.GetFlightMetrics().GetUpcomingFlights(4));
             
         // Failures and modifiers section
         view.UpdateFailuresDisplay(
-            metrics.FailureMetrics.GetTopFailures());
+            metricsProvider.GetFailureMetrics().GetTopFailures());
             
         view.UpdateModifiersDisplay(
-            metrics.ModifierMetrics.GetActiveModifiers());
+            metricsProvider.GetModifierMetrics().GetActiveModifiers());
             
         // Runways and achievements section
         view.UpdateRunwaysDisplay(
-            metrics.RunwayMetrics.GetRunwayInfo());
+            metricsProvider.GetRunwayMetrics().GetRunwayInfo());
             
         view.UpdateAchievementsDisplay(
-            metrics.AchievementMetrics.GetRecentAchievements(),
-            metrics.AchievementMetrics.TotalUnlockedAchievements);
+            metricsProvider.GetAchievementMetrics().GetRecentAchievements(),
+            metricsProvider.GetAchievementMetrics().TotalUnlockedAchievements);
             
-        // Get recent logs from the logger (this would need to be implemented)
-        List<string> recentLogs = GetRecentLogs(airport);
+        // Get recent logs from the logger
+        List<string> recentLogs = metricsProvider.GetLogMetrics().GetRecentLogs(4);
         view.UpdateLogsDisplay(recentLogs);
-    }
-    
-    /// <summary>
-    /// Gets recent logs from the logger
-    /// </summary>
-    private List<string> GetRecentLogs(Airport airport)
-    {
-        // In a real implementation, you'd get this from the logger
-        // For now, we'll return an empty list
-        return new List<string>();
     }
     
     /// <summary>

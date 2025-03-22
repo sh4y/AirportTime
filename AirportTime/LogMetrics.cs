@@ -1,8 +1,8 @@
 public class LogMetrics
 {
-    private readonly GameLogger logger;
+    private readonly IGameLogger logger;
 
-    public LogMetrics(GameLogger logger)
+    public LogMetrics(IGameLogger logger)
     {
         this.logger = logger;
     }

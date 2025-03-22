@@ -13,7 +13,7 @@ public class GameMetrics
     public AchievementMetrics AchievementMetrics { get; }
     public LogMetrics LogMetrics { get; }
 
-    public GameMetrics(Airport airport, GameLogger logger)
+    public GameMetrics(Airport airport, IGameLogger logger)
     {
         AirportMetrics = new AirportMetrics(airport);
         EmergencyMetrics = new EmergencyMetrics(airport);

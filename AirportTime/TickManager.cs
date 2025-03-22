@@ -1,6 +1,6 @@
 ﻿using System.Timers;
 
-public class TickManager
+public class TickManager : ITickManager
 {
     public int CurrentTick { get; private set; }
     private System.Timers.Timer timer;

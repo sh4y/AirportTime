@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-public class ModifierManager
+public class ModifierManager : IModifierManager
 {
     private readonly List<Modifier> modifiers = new List<Modifier>();
     // New dictionary to store flight type specific modifiers

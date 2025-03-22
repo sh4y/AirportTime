@@ -1,4 +1,4 @@
-public class FlightGenerationService
+public class FlightGenerationService : IFlightGenerationService
 {
     private readonly FlightGenerator _flightGenerator;
     private readonly FlightScheduler _flightScheduler;

@@ -2,7 +2,7 @@
 // Flight class to represent flights and handle landing procedure
 // Plane class to represent planes that will land on the runways
 // Treasury class to manage player's gold balance
-public class Treasury
+public class Treasury : ITreasury
 {
     // 1) Factor out magic numbers
     private const double DefaultStartingBalance = 90.0;

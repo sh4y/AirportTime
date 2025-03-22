@@ -6,7 +6,7 @@ using System.Linq;
 /// Manages the process of landing flights, offering both automatic and manual runway selection.
 /// Refactored to use the AirportViewController for UI interactions.
 /// </summary>
-public class FlightLandingManager
+public class FlightLandingManager : IFlightLandingManager
 {
     private readonly RunwayManager runwayManager;
     private readonly Treasury treasury;
@@ -15,7 +15,7 @@ public class FlightLandingManager
     private readonly EventSystem eventSystem;
     private readonly Weather weather;
     private readonly IRandomGenerator randomGenerator;
-    private readonly TickManager tickManager;
+    private readonly ITickManager tickManager;
     private readonly EmergencyFlightHandler emergencyFlightHandler;
     
     // Reference to the airport view controller for UI interactions
@@ -41,7 +41,7 @@ public class FlightLandingManager
         GameLogger gameLogger,
         EventSystem eventSystem,
         IRandomGenerator randomGenerator,
-        TickManager tickManager,
+        ITickManager tickManager,
         EmergencyFlightHandler emergencyFlightHandler)
     {
         this.runwayManager = runwayManager;

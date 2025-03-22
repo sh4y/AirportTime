@@ -4,7 +4,7 @@ using System.Collections.Generic;
 /// <summary>
 /// Manages the airport's experience points and level progression
 /// </summary>
-public class ExperienceSystem
+public class ExperienceSystem : IExperienceSystem
 {
     private readonly GameLogger logger;
     

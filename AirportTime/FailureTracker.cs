@@ -5,7 +5,7 @@ using System.Linq;
 /// <summary>
 /// Tracks failures and determines when the game is over
 /// </summary>
-public class FailureTracker
+public class FailureTracker : IFailureTracker
 {
     private Dictionary<FailureType, int> failureCounts = new Dictionary<FailureType, int>();
     private Dictionary<FailureType, int> failureThresholds = new Dictionary<FailureType, int>();

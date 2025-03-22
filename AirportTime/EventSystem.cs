@@ -1,4 +1,4 @@
-﻿public class EventSystem
+﻿public class EventSystem : IEventSystem
 {
     private readonly IRandomGenerator randomGenerator;
     private readonly List<IEvent> possibleEvents = new List<IEvent>();

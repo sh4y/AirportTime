@@ -6,7 +6,7 @@ using System.Data.SQLite;
 /// A logger that stores messages in memory, prints them to the console,
 /// and writes logs to a SQLite database.
 /// </summary>
-public class GameLogger : IDisposable
+public class GameLogger : IDisposable, IGameLogger
 {
     private readonly List<string> logEntries;
     private readonly SQLiteLogStore logStore;  // Always used
@@ -77,6 +77,7 @@ public class GameLogger : IDisposable
             Console.WriteLine("│                                                                                          │");
         }
     }
+    
 
     /// <summary>
     /// Disposes the underlying <see cref="SQLiteLogStore"/> and closes its connection.

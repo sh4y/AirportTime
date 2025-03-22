@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-public class RunwayManager : IRunwayProvider
+public class RunwayManager : IRunwayProvider, IRunwayManager
 {
     private readonly List<Runway> runways = new List<Runway>();
     private readonly RunwayMaintenanceSystem maintenanceSystem;
@@ -301,10 +301,11 @@ public class RunwayManager : IRunwayProvider
         return runways.FirstOrDefault(r => r.Name.Equals(runwayName, StringComparison.OrdinalIgnoreCase));
     }
     
+
     /// <summary>
     /// Performs maintenance on all runways
     /// </summary>
-    public void PerformMaintenance(Treasury treasury)
+    public void PerformMaintenance(ITreasury treasury)
     {
         foreach (var runway in runways)
         {

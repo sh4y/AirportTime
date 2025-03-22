@@ -5,9 +5,9 @@ public class InputHandler
     private readonly Airport airport;
     private readonly FlightGenerator flightGenerator;
     private readonly TickManager tickManager;
-    private readonly GameLogger logger;
+    private readonly IGameLogger logger;
 
-    public InputHandler(Airport airport, FlightGenerator flightGenerator, TickManager tickManager, GameLogger logger)
+    public InputHandler(Airport airport, FlightGenerator flightGenerator, TickManager tickManager, IGameLogger logger)
     {
         this.airport = airport;
         this.flightGenerator = flightGenerator;

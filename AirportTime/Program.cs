@@ -6,22 +6,43 @@ namespace AirportTime
     {
         static void Main(string[] args)
         {
-            // Create core services
+            // Create and configure the tick manager
             var tickManager = new TickManager();
             
-            // Create the view (using our new simplified implementation)
+            // Create the view
             IAirportView view = new ConsoleUI();
             
-            // Create the airport with view controller already configured
-            var airport = AirportFactory.CreateAirportWithView("International Airport", 2000, tickManager, view);
+            // Create the container (allows for customization if needed)
+            var container = new DependencyContainer();
             
-            // Create the view controller with our new implementation
-            var viewController = new AirportViewController(view, airport);
+            // Register the tick manager and view
+            container.Register<ITickManager>(tickManager);
+            container.Register<IAirportView>(view);
             
-            // Create flight generator for manual flight creation
-            var flightGenerator = new FlightGenerator(new RandomGenerator());
+            // Let the factory register other services
+            AirportFactory.RegisterCoreServices(container, 2000, tickManager);
             
-            // Create input handler
+            // Create the airport
+            var airport = AirportFactory.CreateAirportFromContainer(container, "International Airport");
+            
+            // Create metrics provider
+            var metricsProvider = new GameMetricsProvider(airport, container.Get<IGameLogger>());
+            container.Register<IGameMetricsProvider>(metricsProvider);
+            
+            // Create the view controller with proper dependency injection
+            var viewController = new AirportViewController(
+                container.Get<IAirportView>(),
+                airport,
+                container.Get<IGameMetricsProvider>()
+            );
+            container.Register<IAirportViewController>(viewController);
+            
+            // Set the view controller on the landing manager
+            ((IFlightLandingManager)airport.LandingManager).SetViewController(viewController);
+            
+            // Create input handler (ideally this would also use dependency injection)
+            var randomGenerator = container.Get<IRandomGenerator>();
+            var flightGenerator = new FlightGenerator(randomGenerator);
             var inputHandler = new InputHandler(airport, flightGenerator, tickManager, airport.GameLogger);
             
             // Setup tick event handler
@@ -34,7 +55,7 @@ namespace AirportTime
                 if (!airport.IsGameOver)
                 {
                     // Update the view using the controller
-                    viewController.UpdateView(airport, currentTick);
+                    viewController.UpdateView(currentTick);
                     
                     // Handle input
                     inputHandler.HandleInput(currentTick);
