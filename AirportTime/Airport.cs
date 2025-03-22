@@ -1,4 +1,5 @@
-﻿public class Airport
+﻿// Airport.cs
+public class Airport
 {
     public string Name { get; }
     
@@ -84,22 +85,46 @@
         LandingManager.ToggleLandingMode();
     }
 
+    // Handle a flight cancellation
+    public void HandleFlightCancelled(Flight flight)
+    {
+        GameLogger.Log($"Flight {flight.FlightNumber} has been cancelled.");
+        
+        // Reset consecutive flights counter in achievement system
+        AchievementSystem.ResetConsecutiveFlights();
+        
+        // Other cancellation logic...
+    }
+
+    // Helper method to determine if it's night time based on game clock
+    private bool IsNightTime(int currentTick)
+    {
+        // Game time (10 minutes per tick as an example)
+        int gameHours = (currentTick % (24 * 60 / 10)) / (60 / 10);
+        // Consider night time between 22:00 and 6:00
+        return gameHours >= 22 || gameHours < 6;
+    }
+
     #region Event Handlers
     
+    // In Airport.cs, update HandleFlightLanded:
     private void HandleFlightLanded(Flight flight, Runway runway, bool isOnTime, int currentTick)
     {
         // Get the current weather
         Weather weather = new Weather(_randomGenerator);
-        
+    
         // Get the runway wear level
         int runwayWear = RunwayManager.GetMaintenanceSystem().GetWearLevel(runway.Name);
-        
+    
         // Check if this was a perfect landing (no delays)
         bool perfectLanding = !flight.IsDelayed() && isOnTime;
-        
-        // Get simultaneous flight count
-        int simultaneousFlights = _flightProcessingService.GetSimultaneousFlightCount();
-        
+    
+        // Get actual simultaneous flight count from the processing service
+        int simultaneousFlights = _flightProcessingService.GetActiveFlights().Count;
+    
+        // Check if it's night time
+        bool isNightTime = IsNightTime(currentTick);
+    
         // Calculate XP for this landing
         int xpEarned = ExperienceSystem.CalculateFlightXP(
             flight, 
@@ -109,14 +134,22 @@
             perfectLanding, 
             simultaneousFlights
         );
-        
+    
         // Add the earned XP
         ExperienceSystem.AddExperience(xpEarned);
-        
-        // Record the flight in the achievement system
-        AchievementSystem.RecordFlightLanded(flight, perfectLanding, runwayWear);
-    }
     
+        // Record the flight in the achievement system with simultaneous flights count
+        AchievementSystem.RecordFlightLanded(
+            flight, 
+            perfectLanding, 
+            runwayWear,
+            weather.CurrentWeather,
+            isNightTime,
+            simultaneousFlights
+        );
+    }
+
+
     private void HandleAchievementUnlocked(Achievement achievement)
     {
         GameLogger.Log($"Achievement unlocked: {achievement.Name}");
@@ -131,6 +164,34 @@
             AchievementType.PerfectLandings => XPBuff.FromAchievement(achievement, nextItemId),
             AchievementType.RunwayExpert => RunwayMaintenanceBuff.FromAchievement(achievement, nextItemId),
             AchievementType.PassengerMilestone => GoldIncomeBuff.FromAchievement(achievement, nextItemId),
+            AchievementType.WeatherMaster => WeatherMasterBuff.FromAchievement(achievement, nextItemId),
+            AchievementType.NightFlight => NightFlightBuff.FromAchievement(achievement, nextItemId),
+            AchievementType.ConsecutiveFlights => new XPBuff(
+                nextItemId,
+                $"Air Traffic Mastery {achievement.Tier}",
+                $"Increases XP earned from all flights by {achievement.Tier * 7.5:F1}%",
+                achievement.Tier * 2500,
+                1.0 + (achievement.Tier * 0.075),
+                achievement.Tier
+            ),
+            AchievementType.SimultaneousFlights => new RunwayBuff(
+                nextItemId,
+                $"Air Traffic Efficiency {achievement.Tier}",
+                $"Reduces landing duration by {achievement.Tier * 5:F0}%",
+                achievement.Tier * 3500,
+                BuffType.LandingDurationReduction,
+                1.0 - (achievement.Tier * 0.05),
+                achievement.Tier
+            ),
+            AchievementType.EmergencyLandings => new FlightSpecializationBuff(
+                nextItemId,
+                $"Emergency Response {achievement.Tier}",
+                $"Increases Emergency flight revenue by {achievement.Tier * 15:F0}%",
+                achievement.Tier * 4000,
+                FlightType.Emergency,
+                1.0 + (achievement.Tier * 0.15),
+                achievement.Tier
+            ),
             _ => null
         };
         
@@ -202,3 +263,6 @@
     
     #endregion
 }
+// WeatherMasterBuff.cs
+
+// NightFlightBuff.cs

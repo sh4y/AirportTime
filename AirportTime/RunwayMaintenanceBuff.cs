@@ -1,6 +1,3 @@
-/// <summary>
-/// Represents a buff that reduces runway maintenance time
-/// </summary>
 public class RunwayMaintenanceBuff : Item
 {
     public double MaintenanceTimeReduction { get; }
@@ -34,10 +31,10 @@ public class RunwayMaintenanceBuff : Item
             throw new ArgumentException("Achievement must be of RunwayExpert type");
             
         // Calculate price based on tier
-        double price = achievement.Tier * 1500;
+        double price = AchievementConfig.RunwayExpertBasePrice * achievement.Tier;
         
-        // Each tier reduces by 10%
-        double reduction = 1.0 - (0.1 * achievement.Tier);
+        // Each tier reduces by percentage from config
+        double reduction = 1.0 - (AchievementConfig.RunwayExpertBuffPercentage * achievement.Tier);
         
         return new RunwayMaintenanceBuff(
             nextItemId,
