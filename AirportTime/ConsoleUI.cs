@@ -1,209 +1,398 @@
 ﻿public static class ConsoleUI
 {
-    private static readonly string horizontalLine = "───────────────────────────────────────────────────────────────────────────────────────────";
-    private static readonly string topBorder = "┌" + horizontalLine + "┐";
-    private static readonly string bottomBorder = "└" + horizontalLine + "┘";
-    private static readonly string middleBorder = "├" + horizontalLine + "┤";
-    private static readonly string sectionBorder = "│                                                                                          │";
+    private static readonly int columnWidth = 60;
+    private static readonly int spacing = 14;
+    private static GameMetrics metrics;
     
     public static void DisplayStatus(Airport airport, int currentTick)
     {
         // Skip display if game is over
         if (airport.IsGameOver) return;
         
+        // Initialize metrics if needed
+        if (metrics == null)
+        {
+            metrics = new GameMetrics(airport, airport.GameLogger);
+        }
+        
         Console.Clear();
         
-        // Header section with airport info
+        // Draw the different sections
         DrawHeader(airport, currentTick);
-        
-        // Emergency notifications (if any)
-        DrawEmergencySection(airport, currentTick);
-        
-        // XP and level progress
-        DrawExperienceSection(airport);
-        
-        // Failure tracker section
-        DrawFailureSection(airport);
-        
-        // Runway section
-        DrawRunwaySection(airport);
-        
-        // Upcoming flights section
-        DrawFlightSection(airport);
-        
-        // Active Modifiers section
-        DrawModifiersSection(airport);
-        
-        // Achievements section
-        DrawAchievementsSection(airport);
-        
-        // Log section
-        DrawLogSection(airport);
-        
-        // Control section
-        DrawControlSection();
+        DrawEmergencies(currentTick);
+        DrawTwoColumnContent(airport);
+        DrawLogs(airport);
+        DrawControls();
     }
     
     private static void DrawHeader(Airport airport, int currentTick)
     {
-        // Calculate game time (10 minutes per tick as an example)
-        int gameDays = currentTick / (24 * 60 / 10); // 144 ticks per day if 10 min per tick
-        int gameHours = (currentTick % (24 * 60 / 10)) / (60 / 10);
-        int gameMinutes = (currentTick % (60 / 10)) * 10;
-        string gameTime = $"{gameDays}d {gameHours:D2}:{gameMinutes:D2}";
+        var airportInfo = metrics.AirportMetrics;
+        var timeInfo = metrics.AirportMetrics.GetTimeInfo(currentTick);
         
-        Console.WriteLine(topBorder);
-        Console.WriteLine($"│ AIRPORT MANAGER: {airport.Name,-60} Day {gameDays,3} {gameHours:D2}:{gameMinutes:D2} │");
-        Console.WriteLine($"│ Time: {currentTick,5} ticks     Gold: ${airport.Treasury.GetBalance(),8:N0}     Weather: {GetWeatherInfo(airport),-11} │");
-        Console.WriteLine($"│ Landing Mode: {airport.LandingManager.CurrentLandingMode,-25} Active Flights: {GetActiveFlightCount(airport),3}              │");
-        Console.WriteLine(middleBorder);
+        Console.WriteLine($"=== AIRPORT MANAGER: {airportInfo.Name} ===");
+        Console.WriteLine($"Day {timeInfo.Days} {timeInfo.Hours:D2}:{timeInfo.Minutes:D2}  |  Time: {currentTick} ticks  |  Gold: ${airportInfo.GoldBalance:N0}  |  Weather: {airportInfo.GetWeatherInfo()}");
+        Console.WriteLine($"Landing Mode: {airportInfo.CurrentLandingMode}  |  Active Flights: {airportInfo.ActiveFlightsCount}");
+        Console.WriteLine(new string('-', Console.WindowWidth - 1));
     }
     
-    private static void DrawEmergencySection(Airport airport, int currentTick)
+    private static void DrawEmergencies(int currentTick)
     {
-        var emergencies = airport.EmergencyFlightHandler.GetActiveEmergencies(currentTick);
+        var emergencies = metrics.EmergencyMetrics.GetActiveEmergencies(currentTick);
         
         if (emergencies.Count == 0) return;
         
-        Console.WriteLine("│ 🚨 EMERGENCY FLIGHTS REQUIRING IMMEDIATE ATTENTION                                           │");
+        Console.WriteLine("!!! EMERGENCY FLIGHTS REQUIRING IMMEDIATE ATTENTION !!!");
         
-        foreach (var (flightNumber, timeRemaining, flight) in emergencies)
+        foreach (var emergency in emergencies)
         {
-            // Show warning color for low time
-            if (timeRemaining <= 5)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-            }
-            else if (timeRemaining <= 10)
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-            }
+            if (emergency.TimeRemaining <= 5) Console.ForegroundColor = ConsoleColor.Red;
+            else if (emergency.TimeRemaining <= 10) Console.ForegroundColor = ConsoleColor.Yellow;
             
-            Console.WriteLine($"│  Flight {flightNumber,-8} | {flight.Type,-10} | {flight.Priority,-10} | Response Time: {timeRemaining,3} ticks remaining  │");
+            Console.WriteLine($"  Flight {emergency.FlightNumber} | {emergency.FlightType} | {emergency.Priority} | Response Time: {emergency.TimeRemaining} ticks remaining");
             Console.ResetColor();
         }
         
-        Console.WriteLine(middleBorder);
+        Console.WriteLine(new string('-', Console.WindowWidth - 1));
     }
     
-    private static int GetActiveFlightCount(Airport airport)
+    private static void DrawTwoColumnContent(Airport airport)
     {
-        return airport.FlightScheduler.GetUnlandedFlights().Count;
+        // Left and right column pairs
+        DrawExperienceAndFlights(airport);
+        DrawFailuresAndModifiers(airport);
+        DrawRunwaysAndAchievements(airport);
     }
     
-    private static string GetWeatherInfo(Airport airport)
+    private static void DrawExperienceAndFlights(Airport airport)
     {
-        // This is a placeholder - we'd need to expose Weather from Airport
-        // For now, return a placeholder
-        return "Clear";
-    }
-    
-    private static void DrawExperienceSection(Airport airport)
-    {
-        int level = airport.ExperienceSystem.CurrentLevel;
-        int currentXP = airport.ExperienceSystem.CurrentXP;
-        int nextLevelXP = airport.ExperienceSystem.GetRequiredXPForNextLevel();
-        int xpNeeded = nextLevelXP - currentXP;
-        int progressPercentage = airport.ExperienceSystem.GetLevelProgressPercentage();
+        var xpMetrics = metrics.ExperienceMetrics;
+        var upcomingFlights = metrics.FlightMetrics.GetUpcomingFlights(4);
         
-        // Calculate estimated time to next level (assuming 40 XP per flight on average, 1 flight per 12 ticks)
-        int flightsNeeded = (int)Math.Ceiling(xpNeeded / 40.0);
-        int estimatedTicks = flightsNeeded * 12;
-        string timeEstimate = estimatedTicks > 1000 ? "a long time" : $"~{estimatedTicks} ticks";
+        // Section headers
+        Console.Write("LEVEL AND EXPERIENCE");
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        Console.WriteLine("UPCOMING FLIGHTS");
         
-        Console.WriteLine($"│ LEVEL {level,-10} Next Level: {timeEstimate,-20} Efficiency Bonus: +{(level * 5)}%           │");
+        // Level info
+        Console.Write($"  Current: Level {xpMetrics.CurrentLevel}");
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        Console.WriteLine("  ID      | Type       | Priority   | Size    | Passengers | Revenue");
         
-        // Draw progress bar (60 characters wide)
-        DrawProgressBar(progressPercentage, 60);
+        // Progress bar
+        int progressPercentage = xpMetrics.ProgressPercentage;
+        int barWidth = 40;
+        int filledWidth = (int)Math.Round(progressPercentage / 100.0 * barWidth);
         
-        Console.WriteLine($"│ XP: {currentXP}/{nextLevelXP} ({xpNeeded} needed for next level)   •   Unlocks: {GetNextUnlock(level),-22} │");
-        Console.WriteLine(middleBorder);
-    }
-    
-    private static string GetNextUnlock(int currentLevel)
-    {
-        return currentLevel switch
+        Console.Write("  Progress: [");
+        Console.ForegroundColor = GetProgressColor(progressPercentage);
+        Console.Write(new string('█', filledWidth));
+        Console.ResetColor();
+        Console.Write(new string('░', barWidth - filledWidth));
+        Console.Write($"] {progressPercentage}%");
+        
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        // First flight
+        if (upcomingFlights.Count > 0)
         {
-            1 => "Medium Runway (Level 2)",
-            2 => "Runway Speed Upgrade (L3)",
-            3 => "Income Boost (Level 4)",
-            4 => "Large Runway (Level 5)",
-            _ => "Various Upgrades"
-        };
-    }
-    
-    private static void DrawFailureSection(Airport airport)
-    {
-        Console.WriteLine("│ FAILURES                                                                                 │");
-        
-        var failureTypes = Enum.GetValues(typeof(FailureType))
-            .Cast<FailureType>()
-            .OrderByDescending(f => airport.FailureTracker.GetFailurePercentage(f));
+            var flight = upcomingFlights[0];
+            string statusIndicator = flight.IsEmergency ? "⚠️" : (flight.IsDelayed ? "!" : " ");
             
-        // Get the top 3 most critical failures
-        var topFailures = failureTypes.Take(3).ToList();
-        
-        if (topFailures.Count == 0)
-        {
-            Console.WriteLine("│  No failures recorded.                                                                     │");
-            Console.WriteLine("│                                                                                          │");
-            Console.WriteLine("│                                                                                          │");
+            if (flight.IsEmergency) Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"  {statusIndicator}{flight.FlightNumber,-8} | {flight.FlightType,-10} | {flight.Priority,-10} | {flight.PlaneSize,-7} | {flight.Passengers,8} pax | ${flight.EstimatedRevenue,7:N0}");
+            if (flight.IsEmergency) Console.ResetColor();
         }
         else
         {
-            foreach (var failureType in topFailures)
-            {
-                int count = airport.FailureTracker.GetFailureCount(failureType);
-                int threshold = airport.FailureTracker.GetFailureThreshold(failureType);
-                int percentage = airport.FailureTracker.GetFailurePercentage(failureType);
-                
-                // Set color based on failure percentage
-                if (percentage >= 75)
-                    Console.ForegroundColor = ConsoleColor.Red;
-                else if (percentage >= 50)
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    
-                Console.WriteLine($"│  {failureType,-20} | Count: {count,2}/{threshold,-2} | Danger Level: {GetDangerLevel(percentage),-12} │");
-                Console.ResetColor();
-            }
-            
-            // Fill empty lines if needed
-            for (int i = 0; i < 3 - topFailures.Count; i++)
-            {
-                Console.WriteLine("│                                                                                          │");
-            }
+            Console.WriteLine("  No flights scheduled.");
         }
         
-        Console.WriteLine(middleBorder);
-    }
-    
-    private static string GetDangerLevel(int percentage)
-    {
-        return percentage switch
+        // XP details
+        Console.Write($"  XP: {xpMetrics.CurrentXP}/{xpMetrics.NextLevelXP} ({xpMetrics.XPNeeded} needed)");
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        // Second flight
+        if (upcomingFlights.Count > 1)
         {
-            >= 90 => "CRITICAL",
-            >= 75 => "High",
-            >= 50 => "Moderate",
-            >= 25 => "Low",
-            _ => "Minimal"
-        };
+            var flight = upcomingFlights[1];
+            string statusIndicator = flight.IsEmergency ? "⚠️" : (flight.IsDelayed ? "!" : " ");
+            
+            if (flight.IsEmergency) Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"  {statusIndicator}{flight.FlightNumber,-8} | {flight.FlightType,-10} | {flight.Priority,-10} | {flight.PlaneSize,-7} | {flight.Passengers,8} pax | ${flight.EstimatedRevenue,7:N0}");
+            if (flight.IsEmergency) Console.ResetColor();
+        }
+        else
+        {
+            Console.WriteLine();
+        }
+        
+        // Next level details
+        string timeEstimate = xpMetrics.GetEstimatedTimeToNextLevel();
+        Console.Write($"  Next Level: {timeEstimate} • Bonus: +{xpMetrics.EfficiencyBonus}%");
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        // Third flight
+        if (upcomingFlights.Count > 2)
+        {
+            var flight = upcomingFlights[2];
+            string statusIndicator = flight.IsEmergency ? "⚠️" : (flight.IsDelayed ? "!" : " ");
+            
+            if (flight.IsEmergency) Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"  {statusIndicator}{flight.FlightNumber,-8} | {flight.FlightType,-10} | {flight.Priority,-10} | {flight.PlaneSize,-7} | {flight.Passengers,8} pax | ${flight.EstimatedRevenue,7:N0}");
+            if (flight.IsEmergency) Console.ResetColor();
+        }
+        else
+        {
+            Console.WriteLine();
+        }
+        
+        // Unlocks
+        string nextUnlock = xpMetrics.GetNextUnlock();
+        if (nextUnlock.Length > columnWidth - 12)
+            nextUnlock = nextUnlock.Substring(0, columnWidth - 15) + "...";
+            
+        Console.Write($"  Unlocks: {nextUnlock}");
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        // Fourth flight
+        if (upcomingFlights.Count > 3)
+        {
+            var flight = upcomingFlights[3];
+            string statusIndicator = flight.IsEmergency ? "⚠️" : (flight.IsDelayed ? "!" : " ");
+            
+            if (flight.IsEmergency) Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"  {statusIndicator}{flight.FlightNumber,-8} | {flight.FlightType,-10} | {flight.Priority,-10} | {flight.PlaneSize,-7} | {flight.Passengers,8} pax | ${flight.EstimatedRevenue,7:N0}");
+            if (flight.IsEmergency) Console.ResetColor();
+        }
+        else
+        {
+            Console.WriteLine();
+        }
+        
+        // Show more flights message if needed
+        if (upcomingFlights.Count > 4)
+        {
+            Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+            Console.WriteLine($"  + {upcomingFlights.Count - 4} more flights scheduled...");
+        }
+        
+        Console.WriteLine(new string('-', Console.WindowWidth - 1));
     }
     
-    private static void DrawProgressBar(int percentage, int width)
+    private static void DrawFailuresAndModifiers(Airport airport)
     {
-        int filledWidth = (int)Math.Round(percentage / 100.0 * width);
+        var topFailures = metrics.FailureMetrics.GetTopFailures();
+        var modifiers = metrics.ModifierMetrics.GetActiveModifiers();
         
-        Console.Write("│ [");
+        // Section headers
+        Console.Write("FAILURES");
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        Console.WriteLine("ACTIVE MODIFIERS");
         
-        // Fill progress with different colors based on percentage
-        Console.ForegroundColor = GetProgressColor(percentage);
-        Console.Write(new string('█', filledWidth));
-        Console.ResetColor();
+        // First row
+        if (topFailures.Count == 0)
+        {
+            Console.Write("  No failures recorded.");
+        }
+        else
+        {
+            var failure = topFailures[0];
+            if (failure.Percentage >= 75) Console.ForegroundColor = ConsoleColor.Red;
+            else if (failure.Percentage >= 50) Console.ForegroundColor = ConsoleColor.Yellow;
+            
+            Console.Write($"  {failure.Type,-20} | Count: {failure.Count}/{failure.Threshold} | {failure.DangerLevel}");
+            Console.ResetColor();
+        }
         
-        // Empty space
-        Console.Write(new string('░', width - filledWidth));
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
         
-        Console.WriteLine($"] {percentage,3}% │");
+        if (modifiers.Count == 0)
+        {
+            Console.WriteLine("  No active modifiers.");
+        }
+        else
+        {
+            var modifier = modifiers[0];
+            string name = modifier.Name.Length > 28 ? modifier.Name.Substring(0, 25) + "..." : modifier.Name;
+            Console.WriteLine($"  {name,-28} | {modifier.PercentageEffect,5:F1}% {modifier.EffectType,-7}");
+        }
+        
+        // Second row
+        if (topFailures.Count > 1)
+        {
+            var failure = topFailures[1];
+            if (failure.Percentage >= 75) Console.ForegroundColor = ConsoleColor.Red;
+            else if (failure.Percentage >= 50) Console.ForegroundColor = ConsoleColor.Yellow;
+            
+            Console.Write($"  {failure.Type,-20} | Count: {failure.Count}/{failure.Threshold} | {failure.DangerLevel}");
+            Console.ResetColor();
+        }
+        else
+        {
+            Console.Write("");
+        }
+        
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        if (modifiers.Count > 1)
+        {
+            var modifier = modifiers[1];
+            string name = modifier.Name.Length > 28 ? modifier.Name.Substring(0, 25) + "..." : modifier.Name;
+            Console.WriteLine($"  {name,-28} | {modifier.PercentageEffect,5:F1}% {modifier.EffectType,-7}");
+        }
+        else
+        {
+            Console.WriteLine();
+        }
+        
+        // Third row
+        if (topFailures.Count > 2)
+        {
+            var failure = topFailures[2];
+            if (failure.Percentage >= 75) Console.ForegroundColor = ConsoleColor.Red;
+            else if (failure.Percentage >= 50) Console.ForegroundColor = ConsoleColor.Yellow;
+            
+            Console.Write($"  {failure.Type,-20} | Count: {failure.Count}/{failure.Threshold} | {failure.DangerLevel}");
+            Console.ResetColor();
+        }
+        else
+        {
+            Console.Write("");
+        }
+        
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        if (modifiers.Count > 2)
+        {
+            var modifier = modifiers[2];
+            string name = modifier.Name.Length > 28 ? modifier.Name.Substring(0, 25) + "..." : modifier.Name;
+            Console.WriteLine($"  {name,-28} | {modifier.PercentageEffect,5:F1}% {modifier.EffectType,-7}");
+        }
+        else
+        {
+            Console.WriteLine();
+        }
+        
+        Console.WriteLine(new string('-', Console.WindowWidth - 1));
+    }
+    
+    private static void DrawRunwaysAndAchievements(Airport airport)
+    {
+        var runways = metrics.RunwayMetrics.GetRunwayInfo();
+        var unlockedAchievements = metrics.AchievementMetrics.GetRecentAchievements();
+        
+        // Section headers
+        Console.Write("RUNWAYS");
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        Console.WriteLine("ACHIEVEMENTS");
+        
+        // Subtitle row for Runways
+        Console.Write("  ID              | Type      | Length  | Wear  | Status");
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        // First achievement
+        if (unlockedAchievements.Count == 0)
+        {
+            Console.WriteLine("  No achievements unlocked yet.");
+        }
+        else
+        {
+            var achievement = unlockedAchievements[0];
+            string desc = achievement.Description.Length > 32 ? achievement.Description.Substring(0, 29) + "..." : achievement.Description;
+            Console.WriteLine($"  🏆 {achievement.Name,-20} | {desc}");
+        }
+        
+        // First runway and second achievement
+        if (runways.Count == 0)
+        {
+            Console.Write("  No runways available. Visit the shop to purchase runways.");
+        }
+        else
+        {
+            var runway = runways[0];
+            string wearIndicator = runway.WearLevel >= 80 ? "⚠️" : (runway.WearLevel >= 50 ? "!" : " ");
+            string status = runway.DetailedStatus.Length > 20 ? runway.DetailedStatus.Substring(0, 17) + "..." : runway.DetailedStatus;
+            Console.Write($"  {runway.Name,-15} | {runway.Type,-8} | {runway.Length,5}m  | {wearIndicator}{runway.WearLevel,2}%   | {status}");
+        }
+        
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        if (unlockedAchievements.Count > 1)
+        {
+            var achievement = unlockedAchievements[1];
+            string desc = achievement.Description.Length > 32 ? achievement.Description.Substring(0, 29) + "..." : achievement.Description;
+            Console.WriteLine($"  🏆 {achievement.Name,-20} | {desc}");
+        }
+        else
+        {
+            Console.WriteLine();
+        }
+        
+        // Second runway and third achievement
+        if (runways.Count > 1)
+        {
+            var runway = runways[1];
+            string wearIndicator = runway.WearLevel >= 80 ? "⚠️" : (runway.WearLevel >= 50 ? "!" : " ");
+            string status = runway.DetailedStatus.Length > 20 ? runway.DetailedStatus.Substring(0, 17) + "..." : runway.DetailedStatus;
+            Console.Write($"  {runway.Name,-15} | {runway.Type,-8} | {runway.Length,5}m  | {wearIndicator}{runway.WearLevel,2}%   | {status}");
+        }
+        else
+        {
+            Console.Write("");
+        }
+        
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        if (unlockedAchievements.Count > 2)
+        {
+            var achievement = unlockedAchievements[2];
+            string desc = achievement.Description.Length > 32 ? achievement.Description.Substring(0, 29) + "..." : achievement.Description;
+            Console.WriteLine($"  🏆 {achievement.Name,-20} | {desc}");
+        }
+        else
+        {
+            Console.WriteLine();
+        }
+        
+        // Third runway and achievement count
+        if (runways.Count > 2)
+        {
+            var runway = runways[2];
+            string wearIndicator = runway.WearLevel >= 80 ? "⚠️" : (runway.WearLevel >= 50 ? "!" : " ");
+            string status = runway.DetailedStatus.Length > 20 ? runway.DetailedStatus.Substring(0, 17) + "..." : runway.DetailedStatus;
+            Console.Write($"  {runway.Name,-15} | {runway.Type,-8} | {runway.Length,5}m  | {wearIndicator}{runway.WearLevel,2}%   | {status}");
+        }
+        else
+        {
+            Console.Write("");
+        }
+        
+        Console.SetCursorPosition(columnWidth + spacing, Console.CursorTop);
+        
+        int totalUnlocked = metrics.AchievementMetrics.TotalUnlockedAchievements;
+        if (totalUnlocked > 0)
+        {
+            Console.WriteLine($"  Total achievements unlocked: {totalUnlocked}");
+        }
+        else
+        {
+            Console.WriteLine();
+        }
+        
+        Console.WriteLine(new string('-', Console.WindowWidth - 1));
+    }
+    
+    private static void DrawLogs(Airport airport)
+    {
+        Console.WriteLine("RECENT ACTIVITY");
+        airport.GameLogger.DisplayRecentLogs(4); // Show last 4 logs
+        Console.WriteLine(new string('-', Console.WindowWidth - 1));
+    }
+    
+    private static void DrawControls()
+    {
+        Console.WriteLine("CONTROLS: Q:Pause  F:Flight  S:Shop  R:Repair  M:Mode  T:Metrics  H:Help  X:Exit");
     }
     
     private static ConsoleColor GetProgressColor(int percentage)
@@ -211,331 +400,5 @@
         if (percentage < 30) return ConsoleColor.Red;
         if (percentage < 70) return ConsoleColor.Yellow;
         return ConsoleColor.Green;
-    }
-    
-    private static void DrawFinancialSection(Airport airport)
-    {
-        // Calculate income (gold per tick * 60 ticks for "per minute" rate)
-        double incomePerMin = airport.Treasury.GoldPerTick * 60;
-        
-        // Get runway maintenance costs (rough estimate based on wear)
-        double maintenanceCosts = 0;
-        for (int i = 0; i < airport.RunwayManager.GetRunwayCount(); i++)
-        {
-            string runwayName = i == 0 ? "Small Runway" : (i == 1 ? "Small Runway2" : "Medium Runway");
-            int wear = airport.RunwayManager.GetMaintenanceSystem().GetWearLevel(runwayName);
-            maintenanceCosts += wear * 11; // Based on the maintenance cost calculation
-        }
-        
-        double profit = incomePerMin - maintenanceCosts;
-        
-        Console.WriteLine("│ FINANCIAL SUMMARY                                                                        │");
-        Console.WriteLine($"│  Income Rate: ${incomePerMin,8:N0}/min    Maintenance Costs: ${maintenanceCosts,8:N0}    Profit: ${profit,8:N0}/min  │");
-        Console.WriteLine(middleBorder);
-    }
-    
-private static void DrawRunwaySection(Airport airport)
-{
-    Console.WriteLine("│ RUNWAYS                                                                                  │");
-    Console.WriteLine("│  ID              | Type            | Length  | Wear  | Status                            │");
-    Console.WriteLine("│ -----------------+-----------------+---------+-------+----------------------------------- │");
-    
-    // Get runways count
-    var runwayManager = airport.RunwayManager;
-    var runwayCount = runwayManager.GetRunwayCount();
-    
-    if (runwayCount == 0)
-    {
-        Console.WriteLine("│  No runways available. Visit the shop to purchase runways.                               │");
-        Console.WriteLine("│                                                                                          │");
-        Console.WriteLine("│                                                                                          │");
-    }
-    else
-    {
-        // Get all runways from reflection
-        var runways = GetAllRunways(runwayManager);
-        var smallPlane = new Plane("DUMMY1", PlaneSize.Small, 20000);
-        var availableRunways = runwayManager.GetAvailableRunways(smallPlane)
-            .Select(r => r.Name)
-            .ToHashSet();
-        
-        // Display all runways dynamically
-        foreach (var runway in runways)
-        {
-            string runwayType = DetermineRunwayType(runway);
-            int wear = runwayManager.GetMaintenanceSystem().GetWearLevel(runway.Name);
-            
-            // Get runway status
-            string status;
-            try {
-                status = runway.GetDetailedOccupationStatus();
-            } catch {
-                status = availableRunways.Contains(runway.Name) ? "AVAILABLE" : "OCCUPIED";
-            }
-            
-            string wearIndicator = wear >= 80 ? "⚠️" : (wear >= 50 ? "!" : " ");
-            Console.WriteLine($"│  {runway.Name,-15} | {runwayType,-15} | {runway.Length,5}m  | {wearIndicator}{wear,2}%   | {status,-32} │");
-        }
-        
-        // Fill empty lines if needed
-        for (int i = 0; i < Math.Max(0, 3 - runways.Count); i++)
-        {
-            Console.WriteLine("│                                                                                          │");
-        }
-    }
-    
-    Console.WriteLine(middleBorder);
-}
-
-private static List<Runway> GetAllRunways(RunwayManager runwayManager)
-{
-    var runways = new List<Runway>();
-    
-    // Try to access runways through reflection
-    try
-    {
-        var fieldInfo = typeof(RunwayManager).GetField("runways", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
-        if (fieldInfo != null)
-        {
-            var runwaysList = fieldInfo.GetValue(runwayManager) as List<Runway>;
-            if (runwaysList != null)
-            {
-                runways.AddRange(runwaysList);
-            }
-        }
-    }
-    catch
-    {
-        // Fallback to known runway names if reflection fails
-        string[] knownRunways = { "Small Runway", "Small Runway2", "Medium Runway", "Large Runway" };
-        foreach (var name in knownRunways)
-        {
-            var runway = runwayManager.GetRunwayByName(name);
-            if (runway != null)
-            {
-                runways.Add(runway);
-            }
-        }
-    }
-    
-    return runways;
-}
-
-private static string DetermineRunwayType(Runway runway)
-{
-    // Determine runway type based on length or class
-    if (runway is SmallRunway) return "Small";
-    if (runway is MediumRunway) return "Medium";
-    if (runway is LargeRunway) return "Large";
-    
-    // Fallback to length-based determination
-    return runway.Length switch
-    {
-        <= 5000 => "Small",
-        <= 7500 => "Medium",
-        _ => "Large"
-    };
-}    
-    private static void DrawFlightSection(Airport airport)
-    {
-        Console.WriteLine("│ UPCOMING FLIGHTS                                                                         │");
-        Console.WriteLine("│  ID      | Type       | Priority   | Size    | Passengers | Scheduled | Revenue  | Status │");
-        Console.WriteLine("│ ---------+------------+------------+---------+------------+-----------+----------+------- │");
-        
-        var upcomingFlights = airport.FlightScheduler.GetUnlandedFlights();
-        
-        if (upcomingFlights.Count == 0)
-        {
-            Console.WriteLine("│  No flights scheduled.                                                                    │");
-            Console.WriteLine("│                                                                                          │");
-            Console.WriteLine("│                                                                                          │");
-            Console.WriteLine("│                                                                                          │");
-            Console.WriteLine("│                                                                                          │");
-        }
-        else
-        {
-            int displayCount = Math.Min(upcomingFlights.Count, 5); // Show max 5 flights
-            
-            for (int i = 0; i < displayCount; i++)
-            {
-                var flight = upcomingFlights[i];
-                string flightStatus = flight.Status.ToString();
-                
-                // Highlight emergency flights
-                bool isEmergency = flight.Priority == FlightPriority.Emergency || flight.Type == FlightType.Emergency;
-                if (isEmergency)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                }
-                
-                string statusColor = flightStatus == "Delayed" ? "!" : " ";
-                statusColor = isEmergency ? "⚠️" : statusColor;
-                
-                // Calculate estimated revenue (this is a rough estimate)
-                double baseRevenue = flight.Passengers * 10;
-                double estRevenue = flight.Type switch
-                {
-                    FlightType.Commercial => baseRevenue,
-                    FlightType.Cargo => baseRevenue * 0.75,
-                    FlightType.VIP => baseRevenue * 2.0,
-                    FlightType.Emergency => baseRevenue * 1.5,
-                    _ => baseRevenue
-                };
-                
-                Console.WriteLine($"│ {statusColor}{flight.FlightNumber,-8} | {flight.Type,-10} | {flight.Priority,-10} | {flight.Plane.Size,-7} | {flight.Passengers,8} pax | T{flight.ScheduledLandingTime,6} | ${estRevenue,7:N0} | {flightStatus} │");
-                
-                if (isEmergency)
-                {
-                    Console.ResetColor();
-                }
-            }
-            
-            if (upcomingFlights.Count > displayCount)
-            {
-                Console.WriteLine($"│  + {upcomingFlights.Count - displayCount} more flights scheduled...                                                             │");
-            }
-            else
-            {
-                Console.WriteLine("│                                                                                          │");
-            }
-            
-            // Fill remaining rows if needed
-            for (int i = 0; i < 5 - Math.Max(displayCount, 1) - (upcomingFlights.Count > displayCount ? 1 : 0); i++)
-            {
-                Console.WriteLine("│                                                                                          │");
-            }
-        }
-        
-        Console.WriteLine(middleBorder);
-    }
-    
-    private static void DrawModifiersSection(Airport airport)
-    {
-        Console.WriteLine("│ ACTIVE MODIFIERS                                                                         │");
-        
-        // Try to access active modifiers via reflection (if available)
-        var modifiers = GetActiveModifiers(airport);
-        
-        if (modifiers.Count == 0)
-        {
-            Console.WriteLine("│  No active modifiers.                                                                     │");
-        }
-        else
-        {
-            foreach (var modifier in modifiers)
-            {
-                string effectType = modifier.Value > 1.0 ? "bonus" : "penalty";
-                double percentage = Math.Abs(modifier.Value - 1.0) * 100;
-                
-                Console.WriteLine($"│  {modifier.Name,-30} | {percentage,5:F1}% {effectType,-7} | {GetModifierDescription(modifier.Name),-22} │");
-            }
-            
-            // Pad with empty lines if fewer than 2 modifiers
-            for (int i = 0; i < 2 - modifiers.Count; i++)
-            {
-                Console.WriteLine("│                                                                                          │");
-            }
-        }
-        
-        Console.WriteLine(middleBorder);
-    }
-    
-    private static List<(string Name, double Value)> GetActiveModifiers(Airport airport)
-    {
-        var result = new List<(string Name, double Value)>();
-        
-        try
-        {
-            // Try to access modifiers through reflection
-            var fieldInfo = typeof(ModifierManager).GetField("modifiers", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            if (fieldInfo != null)
-            {
-                var modifiers = fieldInfo.GetValue(airport.ModifierManager) as System.Collections.Generic.List<Modifier>;
-                if (modifiers != null)
-                {
-                    foreach (var modifier in modifiers)
-                    {
-                        result.Add((modifier.Name, modifier.Value));
-                    }
-                }
-            }
-        }
-        catch
-        {
-            // If we can't access modifiers, add some dummy data based on level
-            if (airport.ExperienceSystem.CurrentLevel >= 3)
-            {
-                result.Add(("High Airport Reputation", 1.25));
-            }
-            
-            if (airport.ExperienceSystem.CurrentLevel >= 7)
-            {
-                result.Add(("Weather Resistance", 0.70));
-            }
-        }
-        
-        return result;
-    }
-    
-    private static string GetModifierDescription(string modifierName)
-    {
-        return modifierName switch
-        {
-            "High Airport Reputation" => "Increased revenue",
-            "Weather Resistance" => "Reduced runway wear",
-            "Flight Specialist" => "VIP/Emergency bonus",
-            _ => ""
-        };
-    }
-    
-    private static void DrawAchievementsSection(Airport airport)
-    {
-        Console.WriteLine("│ ACHIEVEMENTS                                                                             │");
-        
-        // Get recent unlocked achievements
-        var unlockedAchievements = airport.AchievementSystem.GetUnlockedAchievements();
-        
-        if (unlockedAchievements.Count == 0)
-        {
-            Console.WriteLine("│  No achievements unlocked yet.                                                            │");
-            Console.WriteLine("│                                                                                          │");
-            Console.WriteLine("│                                                                                          │");
-        }
-        else
-        {
-            // Display the most recent achievements (up to 3)
-            int displayCount = Math.Min(unlockedAchievements.Count, 3);
-            for (int i = unlockedAchievements.Count - displayCount; i < unlockedAchievements.Count; i++)
-            {
-                var achievement = unlockedAchievements[i];
-                Console.WriteLine($"│  🏆 {achievement.Name,-20} | {achievement.Description,-55} │");
-            }
-            
-            // Fill remaining lines if needed
-            for (int i = 0; i < 3 - displayCount; i++)
-            {
-                Console.WriteLine("│                                                                                          │");
-            }
-        }
-        
-        Console.WriteLine(middleBorder);
-    }
-    
-    private static void DrawLogSection(Airport airport)
-    {
-        Console.WriteLine("│ RECENT ACTIVITY                                                                          │");
-        airport.GameLogger.DisplayRecentLogs(4); // Show last 4 logs
-        Console.WriteLine(middleBorder);
-    }
-    
-    private static void DrawControlSection()
-    {
-        Console.WriteLine("│ CONTROLS                                                                                 │");
-        Console.WriteLine("│  Q:Pause/Resume  F:New Flight  S:Shop  R:Repair  M:Toggle Mode  H:Help  X:Exit          │");
-        Console.WriteLine(bottomBorder);
     }
 }

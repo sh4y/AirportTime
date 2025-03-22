@@ -1,3 +1,5 @@
+using AirportTime;
+
 public class InputHandler
 {
     private readonly Airport airport;
@@ -53,6 +55,11 @@ public class InputHandler
 
             case ConsoleKey.H:
                 DisplayHelp();
+                break;
+                
+            case ConsoleKey.T:
+                // Open the metrics window
+                OpenMetricsWindow(currentTick);
                 break;
         }
     }
@@ -110,6 +117,7 @@ public class InputHandler
         Console.WriteLine("S - Open Shop");
         Console.WriteLine("R - Repair All Runways");
         Console.WriteLine("M - Toggle Landing Mode (Automatic/Manual)");
+        Console.WriteLine("T - Open Metrics Dashboard");
         Console.WriteLine("H - Show This Help Screen");
         Console.WriteLine("\nManual Landing Mode:");
         Console.WriteLine("  When a flight is ready to land, you'll be prompted to choose a runway.");
@@ -118,5 +126,18 @@ public class InputHandler
         
         Console.ReadKey(true);
         tickManager.Start();
+    }
+    
+    private void OpenMetricsWindow(int currentTick)
+    {
+        tickManager.Pause();
+        logger.Log("Opening metrics dashboard (T pressed).");
+        
+        // Display metrics window
+        MetricsWindow.DisplayMetrics(airport, currentTick);
+        
+        // Resume the game when metrics window is closed
+        tickManager.Start();
+        logger.Log("Closed metrics dashboard, game resumed.");
     }
 }
