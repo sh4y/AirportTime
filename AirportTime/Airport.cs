@@ -10,6 +10,7 @@
     public ModifierManager ModifierManager { get; private set; }
     public FlightLandingManager LandingManager { get; private set; }
     public ExperienceSystem ExperienceSystem { get; private set; }
+    public AchievementSystem AchievementSystem { get; private set; }
     private Revenue AirportRevenue { get; set; }
     private readonly IRandomGenerator RandomGenerator;
     private EventScheduler flightEventScheduler = new EventScheduler();
@@ -30,9 +31,13 @@
         AirportRevenue = new Revenue();
         ModifierManager = new ModifierManager(AirportRevenue, GameLogger);
         ExperienceSystem = new ExperienceSystem(GameLogger);
+        AchievementSystem = new AchievementSystem(GameLogger);
         
         // Setup level-up handler
         ExperienceSystem.OnLevelUp += HandleLevelUp;
+        
+        // Setup achievement handler
+        AchievementSystem.OnAchievementUnlocked += HandleAchievementUnlocked;
         
         // We'll set the LandingManager after TickManager is available
         LandingManager = null;
@@ -122,6 +127,9 @@
         
         // Add the earned XP to our experience system
         ExperienceSystem.AddExperience(xpEarned);
+        
+        // Record the flight in the achievement system
+        AchievementSystem.RecordFlightLanded(flight);
     } 
     
 private void HandleLevelUp(int newLevel)
@@ -139,6 +147,27 @@ private void HandleLevelUp(int newLevel)
     
     // Unlock new features based on level
     UnlockFeaturesForLevel(newLevel);
+}
+
+private void HandleAchievementUnlocked(Achievement achievement)
+{
+    // Process the achievement
+    GameLogger.Log($"Achievement unlocked: {achievement.Name}");
+    
+    // Check if it's a flight specialization achievement
+    if (achievement.Type == AchievementType.FlightTypeSpecialization)
+    {
+        // Get the next item ID
+        int nextItemId = Shop.GetNextItemId();
+        
+        // Create a buff from the achievement
+        var buff = FlightSpecializationBuff.FromAchievement(achievement, nextItemId);
+        
+        // Add the buff to the shop
+        Shop.AddItemToShop(buff);
+        
+        GameLogger.Log($"New item added to shop: {buff.Name} - {buff.Description} - Price: {buff.Price:C}");
+    }
 }
 
 private void UnlockFeaturesForLevel(int level)

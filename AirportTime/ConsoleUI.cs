@@ -16,8 +16,6 @@
         // XP and level progress
         DrawExperienceSection(airport);
         
-        // Financial section
-        DrawFinancialSection(airport);
         
         // Runway section
         DrawRunwaySection(airport);
@@ -28,11 +26,11 @@
         // Active Modifiers section
         DrawModifiersSection(airport);
         
+        // Achievements section
+        DrawAchievementsSection(airport);
+        
         // Log section
         DrawLogSection(airport);
-        
-        // Control section
-        DrawControlSection();
     }
     
     private static void DrawHeader(Airport airport, int currentTick)
@@ -383,6 +381,39 @@ private static string DetermineRunwayType(Runway runway)
             "Flight Specialist" => "VIP/Emergency bonus",
             _ => ""
         };
+    }
+    
+    private static void DrawAchievementsSection(Airport airport)
+    {
+        Console.WriteLine("│ ACHIEVEMENTS                                                                             │");
+        
+        // Get recent unlocked achievements
+        var unlockedAchievements = airport.AchievementSystem.GetUnlockedAchievements();
+        
+        if (unlockedAchievements.Count == 0)
+        {
+            Console.WriteLine("│  No achievements unlocked yet.                                                            │");
+            Console.WriteLine("│                                                                                          │");
+            Console.WriteLine("│                                                                                          │");
+        }
+        else
+        {
+            // Display the most recent achievements (up to 3)
+            int displayCount = Math.Min(unlockedAchievements.Count, 3);
+            for (int i = unlockedAchievements.Count - displayCount; i < unlockedAchievements.Count; i++)
+            {
+                var achievement = unlockedAchievements[i];
+                Console.WriteLine($"│  🏆 {achievement.Name,-20} | {achievement.Description,-55} │");
+            }
+            
+            // Fill remaining lines if needed
+            for (int i = 0; i < 3 - displayCount; i++)
+            {
+                Console.WriteLine("│                                                                                          │");
+            }
+        }
+        
+        Console.WriteLine(middleBorder);
     }
     
     private static void DrawLogSection(Airport airport)

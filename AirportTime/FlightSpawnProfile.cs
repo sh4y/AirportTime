@@ -93,7 +93,22 @@ public class FlightSpawnProfile
         
         return batchSize;
     }
+    public PlaneSize GetRandomPlaneSizeWithAvailability(int airportLevel, bool smallAvailable, 
+        bool mediumAvailable, bool largeAvailable)
+    {
+        // Create adjusted probabilities based on availability
+        Dictionary<PlaneSize, double> adjustedProbabilities = new Dictionary<PlaneSize, double>();
     
+        if (smallAvailable) adjustedProbabilities[PlaneSize.Small] = planeSizeProbabilities[PlaneSize.Small];
+        if (mediumAvailable) adjustedProbabilities[PlaneSize.Medium] = planeSizeProbabilities[PlaneSize.Medium];
+        if (largeAvailable) adjustedProbabilities[PlaneSize.Large] = planeSizeProbabilities[PlaneSize.Large];
+    
+        // Normalize probabilities
+        NormalizeProbabilities(adjustedProbabilities);
+    
+        // Return random plane size based on adjusted probabilities
+        return SelectRandomWithProbability(adjustedProbabilities);
+    }
     /// <summary>
     /// Calculates the frequency of flight generation based on airport level
     /// Lower number means more frequent flights

@@ -6,8 +6,8 @@
     public double Price { get; }
     public string Description { get; }
 
-    public LargeRunway(int id, string runwayName, int price, string desc) 
-        : base(id, runwayName, DefaultLength, (int)RunwayTier.Tier3, price, desc)
+    public LargeRunway(int id, string runwayName, int price, string desc, int avail=1) 
+        : base(id, runwayName, DefaultLength, (int)RunwayTier.Tier3, price, desc, avail)
     {
         Id = id;
 

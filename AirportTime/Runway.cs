@@ -28,8 +28,8 @@ public class Runway : Item
     public OccupationReason? CurrentOccupationReason { get; private set; } = null;
     public string OccupyingEntity { get; private set; } = string.Empty;
 
-    public Runway(int id, string name, int length, int tier, double price, string description)
-        : base(id, name, description, price, ItemType.Runway, tier, 1)
+    public Runway(int id, string name, int length, int tier, double price, string description, int avail)
+        : base(id, name, description, price, ItemType.Runway, tier, avail)
     {
         Name = name;
         Length = length;

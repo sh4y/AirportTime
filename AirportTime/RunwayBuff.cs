@@ -4,10 +4,9 @@ public class RunwayBuff : Item
     private readonly BuffType buffType;
 
     public RunwayBuff(int id, string name, string description, double price, BuffType buffType, double buffValue, int tier = 1) : 
-        base(id, name, description, price, ItemType.Upgrade, tier)
+        base(id, name, description, price, ItemType.Upgrade, tier, 50)
     {
         this.Id = id;
-
         this.buffType = buffType;
         this.buffValue = buffValue;
     }

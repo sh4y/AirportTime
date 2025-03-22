@@ -121,7 +121,11 @@ public class RunwayManager
             logger.Log($"[UnlockRunway] Runway {runway.Name} was already unlocked.");
         }
     }
-
+    public bool HasRunwayOfLength(int requiredLength)
+    {
+        return runways.Any(r => r.Length >= requiredLength && 
+                                maintenanceSystem.GetWearLevel(r.Name) < RunwayMaintenanceSystem.FullDegradationThreshold);
+    }
     /// <summary>
     /// Displays info about each unlocked runway, including wear level.
     /// Logs a message if none are unlocked.
