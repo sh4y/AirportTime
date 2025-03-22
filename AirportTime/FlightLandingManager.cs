@@ -20,7 +20,8 @@ public class FlightLandingManager : IFlightLandingManager
     
     // Reference to the airport view controller for UI interactions
     private AirportViewController viewController;
-    
+    public bool ForceManualForEmergencies { get; set; } = true;
+
     // Define the landing mode
     public enum LandingMode
     {
@@ -103,7 +104,7 @@ public class FlightLandingManager : IFlightLandingManager
         }
         
         // Process according to landing mode (emergency flights always use manual mode)
-        if (isEmergency || CurrentLandingMode == LandingMode.Manual)
+        if (CurrentLandingMode == LandingMode.Manual)
         {
             return ProcessManualLanding(flight, currentTick, isOnTime);
         }

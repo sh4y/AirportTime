@@ -3,7 +3,7 @@ using System;
 /// <summary>
 /// Factory for creating Airport instances with proper dependency injection
 /// </summary>
-public class AirportFactory
+public class AirportFactory 
 {
     /// <summary>
     /// Creates a new Airport instance with all dependencies initialized
