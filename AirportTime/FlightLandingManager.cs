@@ -1,12 +1,9 @@
+// Modify FlightLandingManager to handle special flights appropriately
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AirportTime;
 
-/// <summary>
-/// Manages the process of landing flights, offering both automatic and manual runway selection.
-/// Refactored to use the AirportViewController for UI interactions.
-/// </summary>
 public class FlightLandingManager : IFlightLandingManager
 {
     private readonly RunwayManager runwayManager;
@@ -22,6 +19,7 @@ public class FlightLandingManager : IFlightLandingManager
     // Reference to the airport view controller for UI interactions
     private AirportViewController viewController;
     public bool ForceManualForEmergencies { get; set; } = true;
+    public bool ForceManualForSpecialFlights { get; set; } = true; // New property for special flights
 
     // Define the landing mode
     public enum LandingMode
@@ -68,7 +66,7 @@ public class FlightLandingManager : IFlightLandingManager
 
     /// <summary>
     /// Processes a flight landing based on the current landing mode.
-    /// Emergency flights are always processed manually regardless of the landing mode.
+    /// Emergency flights and special flights are always processed manually regardless of the landing mode.
     /// </summary>
     /// <param name="flight">The flight to process.</param>
     /// <param name="currentTick">The current game tick.</param>
@@ -104,8 +102,18 @@ public class FlightLandingManager : IFlightLandingManager
             emergencyFlightHandler.RegisterEmergencyFlight(flight, currentTick);
         }
         
-        // Process according to landing mode (emergency flights always use manual mode)
-        if (CurrentLandingMode == LandingMode.Manual)
+        // Check if this is a special flight - display notification if so
+        if (flight.IsSpecial && viewController != null)
+        {
+            viewController.ShowNotification($"Special Flight {flight.FlightNumber} requires manual landing! Double revenue!", true);
+        }
+        
+        // Process according to landing mode and flight type
+        // Special flights must be landed manually if ForceManualForSpecialFlights is true
+        bool forceManual = (isEmergency && ForceManualForEmergencies) || 
+                           (flight.IsSpecial && ForceManualForSpecialFlights);
+                           
+        if (CurrentLandingMode == LandingMode.Manual || forceManual)
         {
             return ProcessManualLanding(flight, currentTick, isOnTime);
         }
@@ -184,6 +192,13 @@ public class FlightLandingManager : IFlightLandingManager
             
             if (viewController != null)
             {
+                // Add indication in the prompt that this is a special flight
+                if (flight.IsSpecial)
+                {
+                    // The viewController will show this is a special flight in the UI
+                    gameLogger.Log($"SPECIAL FLIGHT {flight.FlightNumber} requires manual landing! Double revenue!");
+                }
+                
                 selectedRunway = viewController.PromptRunwaySelection(flight, availableRunways);
             }
             else
@@ -247,16 +262,27 @@ public class FlightLandingManager : IFlightLandingManager
     
         // Calculate and add revenue
         double revenue = modifierManager.CalculateRevenue(flight, currentTick);
-        treasury.AddFunds(revenue, "Flight Revenue");
+        
+        // Special success message for special flights
+        string specialMessage = flight.IsSpecial ? " [SPECIAL FLIGHT - DOUBLE REVENUE]" : "";
+        
+        treasury.AddFunds(revenue, $"Flight Revenue{specialMessage}");
     
         // Log the successful landing
-        gameLogger.Log($"Flight {flight.FlightNumber} landed successfully on {runway.Name} and generated {revenue:C} in revenue.");
+        gameLogger.Log($"Flight {flight.FlightNumber}{specialMessage} landed successfully on {runway.Name} and generated {revenue:C} in revenue.");
     
         // Trigger landing event for experience system
         OnFlightLanded?.Invoke(flight, runway, isOnTime, currentTick);
         
         // Show a notification through the view controller if available
-        viewController?.ShowNotification($"Flight {flight.FlightNumber} landed successfully and generated {revenue:C}");
+        if (viewController != null)
+        {
+            string message = flight.IsSpecial 
+                ? $"SPECIAL Flight {flight.FlightNumber} landed successfully and generated {revenue:C} (DOUBLE REVENUE!)"
+                : $"Flight {flight.FlightNumber} landed successfully and generated {revenue:C}";
+                
+            viewController.ShowNotification(message, flight.IsSpecial);
+        }
     }
 
     /// <summary>

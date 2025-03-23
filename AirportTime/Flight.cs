@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿// Update the Flight class to add a IsSpecial property
 public class Flight
 {
     public string FlightNumber { get; private set; }
@@ -10,6 +9,9 @@ public class Flight
     public int ScheduledLandingTime { get; private set; }
     public int OriginalScheduledLandingTime { get; private set; }
     public int Passengers { get; private set; }
+    
+    // New property to mark special flights
+    public bool IsSpecial { get; private set; }
 
     // Flight state
     public FlightStatus Status { get; private set; } = FlightStatus.Scheduled;
@@ -17,7 +19,8 @@ public class Flight
     // Example threshold: If total delay ticks exceed this, cancel automatically
     private readonly int _cancelDelayThreshold = 30;
 
-    public Flight(string flightNumber, Plane plane, FlightType type, FlightPriority priority, int scheduledLandingTime, int passengers)
+    public Flight(string flightNumber, Plane plane, FlightType type, FlightPriority priority, 
+                  int scheduledLandingTime, int passengers, bool isSpecial = false)
     {
         FlightNumber = flightNumber;
         Plane = plane;
@@ -26,8 +29,10 @@ public class Flight
         ScheduledLandingTime = scheduledLandingTime;
         OriginalScheduledLandingTime = scheduledLandingTime;  // keep track of the original landing time
         Passengers = passengers;
+        IsSpecial = isSpecial;
     }
 
+    // Rest of the Flight class remains the same
     public bool AttemptLanding(Runway runway)
     {
         // If canceled or already landed, we don't proceed with landing
@@ -56,10 +61,6 @@ public class Flight
         }
     }
 
-    /// <summary>
-    /// Increments the scheduled landing time by the given delay ticks. 
-    /// Automatically cancels the flight if total delay exceeds the threshold.
-    /// </summary>
     public void Delay(int delayTicks)
     {
         // If already canceled or landed, no further updates
@@ -75,17 +76,12 @@ public class Flight
         }
     }
 
-    /// <summary>
-    /// Cancels the flight and prevents further attempts to land.
-    /// </summary>
     public void CancelFlight(string reason)
     {
         if (Status == FlightStatus.Canceled) return;
 
         Status = FlightStatus.Canceled;
         Console.WriteLine($"Flight {FlightNumber} canceled. Reason: {reason}");
-        
-        //@todo: add punishment
     }
 
     // Returns the total number of ticks the flight is delayed.
@@ -110,12 +106,6 @@ public class Flight
         return GetDelayTicks() > 0;
     }
 
-    /// <summary>
-    /// Calculates the delay penalty multiplier.
-    /// Every 'ticksPerPenaltyPeriod' ticks of delay reduces revenue by 'penaltyPerPeriod' (e.g., 0.05 for 5%), 
-    /// capped at a maximum total penalty of 'maxPenalty' (e.g., 0.40 for 40%).
-    /// The returned multiplier will be between 1.0 (no penalty) and 0.6 (maximum penalty).
-    /// </summary>
     public double GetDelayPenaltyMultiplier(int ticksPerPenaltyPeriod, double penaltyPerPeriod, double maxPenalty)
     {
         int delayTicks = GetDelayTicks();
@@ -125,10 +115,10 @@ public class Flight
         return 1.0 - penalty;
     }
 
-    // Override ToString for a useful flight summary.
     public override string ToString()
     {
-        return $"Flight {FlightNumber} ({Type}, {Priority}) - " +
+        string specialTag = IsSpecial ? " [SPECIAL]" : "";
+        return $"Flight {FlightNumber} ({Type}, {Priority}){specialTag} - " +
                $"Scheduled: {ScheduledLandingTime} (Original: {OriginalScheduledLandingTime}), " +
                $"Passengers: {Passengers}, Delay: {GetDelayTicks()} ticks, " +
                $"Status: {Status}";

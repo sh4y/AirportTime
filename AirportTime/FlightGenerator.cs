@@ -1,4 +1,5 @@
-﻿using AirportTime;
+﻿// Update FlightGenerator to create special flights occasionally
+using AirportTime;
 
 public class FlightGenerator 
 {
@@ -38,13 +39,14 @@ public class FlightGenerator
         // Determine the scheduled landing time: current tick plus a random offset
         int scheduledLandingTime = CalculateScheduledLandingTime(tick, airportLevel);
         
+        // Randomly determine if this should be a special flight (5% chance, increasing with airport level)
+        bool isSpecial = randomGenerator.NextDouble() < (0.05 + (airportLevel * 0.01));
+        
         // Create and return the flight with the generated properties
-        return new Flight(flightNumber, plane, flightType, flightPriority, scheduledLandingTime, passengerCount);
+        return new Flight(flightNumber, plane, flightType, flightPriority, scheduledLandingTime, passengerCount, isSpecial);
     }
     
-    /// <summary>
-    /// Generate multiple flights at the given tick based on the airport level
-    /// </summary>
+    // Rest of the FlightGenerator methods remain the same
     public List<Flight> GenerateFlightBatch(int tick, int airportLevel)
     {
         // Determine how many flights to generate based on airport level
@@ -59,9 +61,6 @@ public class FlightGenerator
         return flights;
     }
     
-    /// <summary>
-    /// Determines if a new flight batch should be generated based on airport level
-    /// </summary>
     public bool ShouldGenerateFlights(int tick, int airportLevel)
     {
         // Get the generation frequency (ticks between flights)
@@ -80,6 +79,7 @@ public class FlightGenerator
         string[] cargoAirlines = { "FX", "UPS", "DHL", "CAL" };
         string[] vipAirlines = { "PJ", "XO", "VP" };
         string[] emergencyAirlines = { "MED", "RES", "EMG" };
+        string[] specialAirlines = { "SP", "VIP", "EX" }; // New airline codes for special flights
         
         // Select an airline code based on flight type
         string[] airlineCodes = flightType switch

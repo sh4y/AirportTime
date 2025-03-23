@@ -46,8 +46,12 @@ public class Shop : IShop
         levelManager.QueueItemForLevel(new MediumRunway(inventory.GetNextItemId(), "Medium Runway", 10000, "Capable of handling medium aircraft"), 5);
         levelManager.QueueItemForLevel(new GoldIncomeBuff(inventory.GetNextItemId(), "Gold Income Buff", "Increases gold income by 10%", 10000,
             1.1, 1, availability:5), 5);
+        levelManager.QueueItemForLevel(new GoldIncomeBuff(inventory.GetNextItemId(), "Gold Income Buff", "Increases gold income by 20%", 1000,
+            1.2, 1, availability:1), 5);
         levelManager.QueueItemForLevel(new SmallRunway(inventory.GetNextItemId(), "Small Runway3", 250000, "Capable of handling small aircraft"), 6);
         levelManager.QueueItemForLevel(new MediumRunway(inventory.GetNextItemId(), "Medium Runway2", 500000, "Capable of handling medium aircraft"), 8);
+        levelManager.QueueItemForLevel(new GoldIncomeBuff(inventory.GetNextItemId(), "Gold Income Buff", "Increases gold income by 20%", 1000,
+            1.5, 1, availability:1), 6);
         levelManager.QueueItemForLevel(new LargeRunway(inventory.GetNextItemId(), "Large Runway", 1000000, "Capable of handling large aircraft"), 9);
         levelManager.QueueItemForLevel(new LargeRunway(inventory.GetNextItemId(), "Large Runway2", 3000000, "Capable of handling large aircraft"), 9);
     }

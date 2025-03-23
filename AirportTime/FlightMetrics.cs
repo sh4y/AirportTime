@@ -1,4 +1,4 @@
-namespace AirportTime;
+using AirportTime;
 
 public class FlightMetrics
 {
@@ -6,6 +6,7 @@ public class FlightMetrics
     private readonly Dictionary<FlightType, int> _flightTypeCounts = new Dictionary<FlightType, int>();
     private readonly Dictionary<string, int> _airlineOperations = new Dictionary<string, int>();
     private int _totalFlightsProcessed = 0;
+    private int _specialFlightsProcessed = 0; // Track special flights
 
     public FlightMetrics(Airport airport)
     {
@@ -25,6 +26,12 @@ public class FlightMetrics
     {
         _totalFlightsProcessed++;
         _flightTypeCounts[flight.Type]++;
+        
+        // Track special flights
+        if (flight.IsSpecial)
+        {
+            _specialFlightsProcessed++;
+        }
         
         // Extract airline code from flight number (e.g., "AA123" → "AA")
         string airlineCode = flight.FlightNumber.Length >= 2 ? flight.FlightNumber.Substring(0, 2) : flight.FlightNumber;
@@ -46,6 +53,12 @@ public class FlightMetrics
         _airlineOperations.OrderByDescending(kvp => kvp.Value)
             .Take(count)
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    
+    // New method to get special flight statistics
+    public int GetSpecialFlightCount() => _specialFlightsProcessed;
+    
+    public double GetSpecialFlightPercentage() => 
+        _totalFlightsProcessed > 0 ? (double)_specialFlightsProcessed / _totalFlightsProcessed * 100 : 0;
                           
     public int TotalPassengersServed => CalculateTotalPassengers();
     
@@ -79,7 +92,8 @@ public class FlightMetrics
                 EstimatedRevenue = CalculateEstimatedRevenue(flight),
                 Status = flight.Status,
                 IsEmergency = flight.Priority == FlightPriority.Emergency || flight.Type == FlightType.Emergency,
-                IsDelayed = flight.IsDelayed()
+                IsDelayed = flight.IsDelayed(),
+                IsSpecial = flight.IsSpecial // Add special flight flag
             };
             result.Add(flightInfo);
         }
@@ -91,14 +105,19 @@ public class FlightMetrics
     {
         // Simple revenue calculation as placeholder
         double baseRevenue = flight.Passengers * 10;
-        return flight.Type switch
+        double typeMultiplier = flight.Type switch
         {
-            FlightType.Commercial => baseRevenue,
-            FlightType.Cargo => baseRevenue * 0.75,
-            FlightType.VIP => baseRevenue * 2.0,
-            FlightType.Emergency => baseRevenue * 1.5,
-            _ => baseRevenue
+            FlightType.Commercial => 1.0,
+            FlightType.Cargo => 0.75,
+            FlightType.VIP => 2.0,
+            FlightType.Emergency => 1.5,
+            _ => 1.0
         };
+        
+        // Apply double revenue for special flights
+        double specialMultiplier = flight.IsSpecial ? 2.0 : 1.0;
+        
+        return baseRevenue * typeMultiplier * specialMultiplier;
     }
 
     public int TotalScheduledFlights => airport.FlightScheduler.GetUnlandedFlights().Count;

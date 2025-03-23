@@ -10,4 +10,5 @@ public class FlightInfo
     public FlightStatus Status { get; set; }
     public bool IsEmergency { get; set; }
     public bool IsDelayed { get; set; }
+    public bool IsSpecial { get; set; } // New property for special flights
 }

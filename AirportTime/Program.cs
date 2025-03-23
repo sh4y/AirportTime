@@ -39,7 +39,8 @@ namespace AirportTime
             
             // Set the view controller on the landing manager
             ((IFlightLandingManager)airport.LandingManager).SetViewController(viewController);
-            
+            ((FlightLandingManager)airport.LandingManager).ForceManualForEmergencies = false;
+
             // Create input handler (ideally this would also use dependency injection)
             var randomGenerator = container.Get<IRandomGenerator>();
             var flightGenerator = new FlightGenerator(randomGenerator);

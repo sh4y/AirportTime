@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modify ModifierManager to handle special flights
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AirportTime;
@@ -6,11 +7,14 @@ using AirportTime;
 public class ModifierManager : IModifierManager
 {
     private readonly List<Modifier> modifiers = new List<Modifier>();
-    // New dictionary to store flight type specific modifiers
+    // Dictionary to store flight type specific modifiers
     private readonly Dictionary<FlightType, List<Modifier>> flightTypeModifiers = new Dictionary<FlightType, List<Modifier>>();
     
     private readonly Revenue revenueCalculator;
     private readonly GameLogger gameLogger;
+    
+    // Special flight revenue multiplier
+    private const double SpecialFlightMultiplier = 2.0;
 
     public ModifierManager(Revenue revenueCalculator, GameLogger gameLogger)
     {
@@ -71,7 +75,8 @@ public class ModifierManager : IModifierManager
     /// 1. Retrieving the base revenue from the Revenue class.
     /// 2. Applying a delay penalty multiplier.
     /// 3. Applying flight-type specific modifiers.
-    /// 4. Adjusting with general modifiers.
+    /// 4. Applying special flight multiplier if applicable.
+    /// 5. Adjusting with general modifiers.
     /// </summary>
     public double CalculateRevenue(Flight flight, int currentTick)
     {
@@ -87,7 +92,7 @@ public class ModifierManager : IModifierManager
         {
             double revenueLoss = baseRevenue - revenueAfterDelay;
             gameLogger.Log($"Flight {flight.FlightNumber} lost ${revenueLoss:F2} due to {flight.GetDelayTicks(currentTick)} ticks of delay " +
-                            $"(Penalty: {((1.0 - delayMultiplier) * 100):F1}%)");
+                           $"(Penalty: {((1.0 - delayMultiplier) * 100):F1}%)");
         }
         
         // Apply flight-type specific modifiers
@@ -99,9 +104,18 @@ public class ModifierManager : IModifierManager
             double bonus = revenueAfterFlightTypeModifiers - revenueAfterDelay;
             gameLogger.Log($"Flight {flight.FlightNumber} earned ${bonus:F2} extra from {flight.Type} specialization bonus!");
         }
+        
+        // Apply special flight multiplier if this is a special flight
+        double revenueAfterSpecialMultiplier = revenueAfterFlightTypeModifiers;
+        if (flight.IsSpecial)
+        {
+            revenueAfterSpecialMultiplier = revenueAfterFlightTypeModifiers * SpecialFlightMultiplier;
+            double specialBonus = revenueAfterSpecialMultiplier - revenueAfterFlightTypeModifiers;
+            gameLogger.Log($"SPECIAL Flight {flight.FlightNumber} earned ${specialBonus:F2} extra from SPECIAL flight bonus!");
+        }
 
         // Apply any additional general modifiers.
-        double finalRevenue = ApplyModifiers(revenueAfterFlightTypeModifiers);
+        double finalRevenue = ApplyModifiers(revenueAfterSpecialMultiplier);
         return finalRevenue;
     }
     
@@ -130,7 +144,7 @@ public class ModifierManager : IModifierManager
     /// </summary>
     private double GetDelayMultiplier(Flight flight, int currentTick)
     {
-        const int ticksPerPenaltyPeriod = 10;  // Every 5 ticks
+        const int ticksPerPenaltyPeriod = 10;  // Every 10 ticks
         const double penaltyPerPeriod = 0.05; // 5% penalty per period
         const double maxPenalty = 0.40;       // Maximum 40% penalty
 
