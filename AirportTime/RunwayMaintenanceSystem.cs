@@ -60,11 +60,20 @@
     }
 
 
-    public void RepairRunway(string runwayID)
+    public void RepairRunway(string runwayID, bool occupy = true)
     {
         if (registeredRunways.TryGetValue(runwayID, out var runway))
         {
-            runway.Repair();
+            if (occupy)
+            {
+                // Repair the runway and occupy it
+                runway.Repair();
+            }
+            else
+            {
+                // Repair the runway without occupying it
+                runway.RepairNoOccupy();
+            }
             Console.WriteLine($"✅ Runway {runwayID} has been fully repaired and is back in service.");
         }
     }

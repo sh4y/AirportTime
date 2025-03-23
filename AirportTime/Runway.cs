@@ -69,6 +69,13 @@ public class Runway : Item
         OccupyingEntity = "Maintenance Crew";
     }
 
+    public void RepairNoOccupy()
+    {
+        WearLevel = 0;
+        Console.WriteLine($"Runway {Name} has been repaired and is now available.");
+    }
+    
+
     // Keep original method for backward compatibility
     private void Occupy(int duration)
     {

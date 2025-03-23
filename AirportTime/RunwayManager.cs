@@ -301,7 +301,17 @@ public class RunwayManager : IRunwayProvider, IRunwayManager
     {
         return runways.FirstOrDefault(r => r.Name.Equals(runwayName, StringComparison.OrdinalIgnoreCase));
     }
-    
+
+    public void FreeMaintenance(RunwayBuff req)
+    {
+        if (req.BuffType != BuffType.WearReduction)
+            return;
+        
+        foreach (var runway in runways)
+        {
+            maintenanceSystem.RepairRunway(runway.Name, occupy:false);
+        }
+    }
 
     /// <summary>
     /// Performs maintenance on all runways

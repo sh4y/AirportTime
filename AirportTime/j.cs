@@ -47,6 +47,8 @@ public interface IRunwayManager : IRunwayProvider
     /// </summary>
     /// <returns>Runway maintenance system</returns>
     RunwayMaintenanceSystem GetMaintenanceSystem();
+
+    void FreeMaintenance(RunwayBuff req);
     
     /// <summary>
     /// Gets the count of available runways

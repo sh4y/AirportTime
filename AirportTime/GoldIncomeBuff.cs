@@ -13,8 +13,8 @@ public class GoldIncomeBuff : Item
         string description, 
         double price, 
         double goldMultiplier, 
-        int tier) : 
-        base(id, name, description, price, ItemType.Upgrade, tier)
+        int tier, int availability = 1) : 
+        base(id, name, description, price, ItemType.Upgrade, tier, availability)
     {
         GoldMultiplier = goldMultiplier;
     }

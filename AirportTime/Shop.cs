@@ -36,11 +36,20 @@ public class Shop : IShop
         
         // Queue items for future levels
         levelManager.QueueItemForLevel(new RunwayBuff(inventory.GetNextItemId(), "Runway Speed Upgrade", "Increases runway speed by 10%", 10000, 
-            BuffType.LandingDurationReduction, 0.9), 2);
+            BuffType.LandingDurationReduction, 0.9, availability:10), 2);
+        levelManager.QueueItemForLevel(new GoldIncomeBuff(inventory.GetNextItemId(), "Gold Income Buff", "Increases gold income by 10%", 1000,
+            1.1, 1, availability:1), 2);        
+        levelManager.QueueItemForLevel(new GoldIncomeBuff(inventory.GetNextItemId(), "Gold Income Buff", "Increases gold income by 20%", 1000,
+            1.2, 1, availability:1), 3);
+        levelManager.QueueItemForLevel(new RunwayBuff(inventory.GetNextItemId(), "Runway Wear Reduction", "Reduces runway wear by 100%", 5000,
+            BuffType.WearReduction, 100, availability:3), 3);
         levelManager.QueueItemForLevel(new MediumRunway(inventory.GetNextItemId(), "Medium Runway", 10000, "Capable of handling medium aircraft"), 5);
+        levelManager.QueueItemForLevel(new GoldIncomeBuff(inventory.GetNextItemId(), "Gold Income Buff", "Increases gold income by 10%", 10000,
+            1.1, 1, availability:5), 5);
         levelManager.QueueItemForLevel(new SmallRunway(inventory.GetNextItemId(), "Small Runway3", 250000, "Capable of handling small aircraft"), 6);
         levelManager.QueueItemForLevel(new MediumRunway(inventory.GetNextItemId(), "Medium Runway2", 500000, "Capable of handling medium aircraft"), 8);
         levelManager.QueueItemForLevel(new LargeRunway(inventory.GetNextItemId(), "Large Runway", 1000000, "Capable of handling large aircraft"), 9);
+        levelManager.QueueItemForLevel(new LargeRunway(inventory.GetNextItemId(), "Large Runway2", 3000000, "Capable of handling large aircraft"), 9);
     }
 
     // Public methods that delegate to the appropriate components
